@@ -75,27 +75,28 @@ def calibrateImages(images) :
         image.setOpticalAxis(opticalAxis)
 
 def HarrisCorner(images, isDisplay) : 
-    features = []
     for image in images : 
+        features = []
         logging.info(f'IMAGE {image.getImageID():02d}:Applying Harris Corners Detection')
-        imageName = image.getImageName()
-        img       = cv.imread(imageName)
-        gray      = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        gray      = np.float32(gray)
-        dst       = cv.cornerHarris(gray, 2, 3,0.0001)
-        ret, dst = cv.threshold(dst,0.001*dst.max(),255,0)
-        dst = np.uint8(dst)
+        imageName                     = image.getImageName()
+        img                           = cv.imread(imageName)
+        gray                          = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        gray                          = np.float32(gray)
+        dst                           = cv.cornerHarris(gray, 2, 3,0.0001)
+        ret, dst                      = cv.threshold(dst,0.001*dst.max(),255,0)
+        dst                           = np.uint8(dst)
         ret, labels, stats, centroids = cv.connectedComponentsWithStats(dst)
-        criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 0.001)
-        corners = cv.cornerSubPix(gray,np.float32(centroids),(5,5),(-1,-1),criteria)
+        criteria                      = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 0.001)
+        corners                       = cv.cornerSubPix(gray,np.float32(centroids),(5,5),(-1,-1),criteria)
+        for corner in corners : 
+            if isDisplay : 
+                cv.circle(img, (int(corner[0]), int(corner[1])), 4, (0, 0, 255), -1)
+            feature = Feature(corner[0], corner[1], image)
+            features.append(feature) 
         if isDisplay : 
-            img[dst>0.001*dst.max()]=[0,0,255]
             cv.imshow(f'Image {image.getImageID()}', img)
             cv.waitKey(0)
             cv.destroyAllWindows()
-        for corner in corners : 
-            feature = Feature(corner[0], corner[1], image)
-            features.append(feature) 
         image.setFeatures(features)
 
 def SIFT(images, isDisplay) :
@@ -132,7 +133,7 @@ def computePotentialVisibleImages(referenceImage, images, isDisplay) :
             opticalAxis2 = sensedImage.getOpticalAxis() 
             angle        = dot(opticalAxis1, opticalAxis2)
             logging.debug(f'Angle between Image {id1} and Image {id2} : {angle*180/pi}')
-            if angle < cos(60 * pi / 180) :
+            if angle < cos(30 * pi/180) :
                 continue
             else : 
                 potentialVisibleImages.append(sensedImage)
@@ -145,7 +146,7 @@ def computePotentialVisibleImages(referenceImage, images, isDisplay) :
 
     return potentialVisibleImages
 
-def computePotentialFeatures(referenceImage, potentialVisibleImages, feature) : 
+def computePotentialFeatures(referenceImage, potentialVisibleImages, feature, isDisplay) : 
     id1 = referenceImage.getImageID() 
     logging.info(f'IMAGE {id1:02d}:Computing Features Pair with {feature}')
     potentialFeatures = []
@@ -163,27 +164,11 @@ def computePotentialFeatures(referenceImage, potentialVisibleImages, feature) :
             fundamentalMatrix = computeFundamentalMatrix(referenceImage, potentialVisibleImage) 
             features = potentialVisibleImage.getFeatures()
             epiline  = fundamentalMatrix @ coordinate
-            print(coordinate)
-            exit()
             logging.debug(f'Epiline : {epiline}')
-            
-            ref = cv.imread(feature.getImage().getImageName())
-            cv.circle(ref, (int(coordinate[0]), int(coordinate[1])), 10, (0, 255, 0), -1)
-            cv.imshow(f'Ref {referenceImage.getImageID()}', ref)
-            print(epiline)
-            epiline_x = (int(epiline[2] / epiline[0]), 0)
-            epiline_y = (0, int(epiline[2] / epiline[1]))
-            print(epiline_x)
-            print(epiline_y)
-            img = cv.imread(potentialVisibleImage.getImageName())
-            cv.line(img, epiline_x, epiline_y, (255, 0, 0), 5)
-            cv.imshow(f'Sensed {potentialVisibleImage.getImageID()}', img)
-            cv.waitKey(0)
-            cv.destroyAllWindows()
-
-            temp     = filterFeaturesByEpipolarConstraint(features, epiline)
+            temp     = filterFeaturesByEpipolarConstraint(features, epiline, feature, isDisplay)
             for feat in temp :
                 potentialFeatures.append(feat)
+    
     potentialFeatures = sortPotentialFeatures(feature, potentialFeatures, referenceImage)
 
     return potentialFeatures
@@ -210,7 +195,7 @@ def constructPatch(feature, potentialFeatures, referenceImage) :
 
     return patches
                   
-def filterFeaturesByEpipolarConstraint(features, epiline) : 
+def filterFeaturesByEpipolarConstraint(features, epiline, referenceFeature, isDisplay) : 
     potentialFeatures = []
     for feature in features : 
         distance   = (abs(
@@ -221,8 +206,21 @@ def filterFeaturesByEpipolarConstraint(features, epiline) :
             epiline[0]**2 + 
             epiline[1]**2
         ))
-        if distance <= 2 : 
+        if distance <= 5 : 
             potentialFeatures.append(feature)
+    if isDisplay : 
+        for feature in potentialFeatures : 
+            ref = cv.imread(referenceFeature.getImage().getImageName())
+            cv.circle(ref, (int(referenceFeature.getX()), int(referenceFeature.getY())), 4, (0, 255, 0), -1)
+            cv.imshow(f'Reference Image ID : {referenceFeature.getImage().getImageID()}', ref)
+            img = feature.getImage().computeFeatureMap() 
+            epiline_x = (int(-epiline[2] / epiline[0]), 0)
+            epiline_y = (int((-epiline[2] - (epiline[1]*480)) / epiline[0]), 480)
+            cv.line(img, epiline_x, epiline_y, (255, 0, 0), 1)
+            cv.circle(img, (int(feature.getX()), int(feature.getY())), 3, (0, 255, 0), -1)
+            cv.imshow(f'Sensed Image ID : {feature.getImage().getImageID()}', img)
+            cv.waitKey(0)
+            cv.destroyAllWindows()        
 
     return potentialFeatures
 

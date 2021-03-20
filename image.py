@@ -1,4 +1,5 @@
 import numpy as np
+import cv2 as cv
 
 class Image : 
     # Default Constructor
@@ -12,6 +13,15 @@ class Image :
         self.projectionMatrix  = None 
         self.features          = None
         self.fundamentalMatrix = np.empty((NumOfImages, 3, 3))
+    # Functions 
+    def computeFeatureMap(self) : 
+        img = cv.imread(self.imageName)
+        for feature in self.features : 
+            x = int(feature.getX())
+            y = int(feature.getY())
+            cv.circle(img, (x, y), 4, (0, 0, 255), -1)
+
+        return img 
     # Setters
     def setImageName(self, imageName) : 
         self.imageName = imageName
