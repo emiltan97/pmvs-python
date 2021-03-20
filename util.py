@@ -168,7 +168,6 @@ def computePotentialFeatures(referenceImage, potentialVisibleImages, feature, is
             temp     = filterFeaturesByEpipolarConstraint(features, epiline, feature, isDisplay)
             for feat in temp :
                 potentialFeatures.append(feat)
-    
     potentialFeatures = sortPotentialFeatures(feature, potentialFeatures, referenceImage)
 
     return potentialFeatures
@@ -182,7 +181,7 @@ def constructPatch(feature, potentialFeatures, referenceImage) :
         projectionMatrix2 = sensedImage.getProjectionMatrix()
         centre            = triangulate(feature, potentialFeature, projectionMatrix1, projectionMatrix2).ravel()
         normal            = opticalCentre1 - centre
-        normal            = normal / normal[-1]
+        # normal            = normal / normal[-1]
         normal            = np.array([
             normal[0], 
             normal[1], 
@@ -190,6 +189,7 @@ def constructPatch(feature, potentialFeatures, referenceImage) :
         ])
         xAxis             = cross(normal, projectionMatrix1[0][:-1])
         yAxis             = cross(normal, xAxis)
+        
         patch             = Patch(centre, normal, xAxis, yAxis, referenceImage)
         patches.append(patch)
 
@@ -237,7 +237,7 @@ def sortPotentialFeatures(feature, potentialFeatures, referenceImage) :
         depth             = abs(norm((vector1)) - norm((vector2)))
         potentialFeature.setDepth(depth)
     potentialFeatures = insertionSortByDepth(potentialFeatures)
-
+    
     return potentialFeatures               
 
 # Compute Fundamental Matrix : Multiplication of skewform epipole, projection matrix 2 and pseudoinverse of projection matrix 1 
