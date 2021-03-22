@@ -3,7 +3,7 @@ import logging
 import os
 
 from datetime import datetime
-from util import HarrisCorner, SIFT, calibrateImages, computePotentialFeatures, computePotentialVisibleImages, constructPatch, initImages
+from util import HarrisCorner, SIFT, applyGrid, calibrateImages, computePotentialFeatures, computePotentialVisibleImages, constructPatch, initImages
 
 if __name__ == "__main__" : 
     # Initializing parser
@@ -20,12 +20,15 @@ if __name__ == "__main__" :
     else : 
         logging.basicConfig(level=logging.INFO)
     # Registering the input images 
-    os.chdir(args.dirname)
+    os.chdir(args.dirname) # Change current directory to the directory containing the input images
     images = initImages(args.filename)
     # Calibrating the images 
     calibrateImages(images)
-    # Perform Harris Corner feature detection on each image 
-    HarrisCorner(images, args.display)
+    # Applying grid on each image
+    applyGrid(images, 32, args.display)
+    # Performing Harris Corner feature detection on each image 
+    # HarrisCorner(images, args.display)
+    SIFT(images, args.display)
     # For each feature in the refernce image, compute features on other images that satisfies the epipolar constraint
     for image in images : 
         potentialVisibleImages = computePotentialVisibleImages(image, images, args.display)

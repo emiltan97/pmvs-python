@@ -12,6 +12,7 @@ class Image :
         self.opticalAxis       = None
         self.projectionMatrix  = None 
         self.features          = None
+        self.cells             = []
         self.fundamentalMatrix = np.empty((NumOfImages, 3, 3))
     # Functions 
     def computeFeatureMap(self) : 
@@ -41,6 +42,10 @@ class Image :
         self.fundamentalMatrix[targetImageID] = fundamentalMatrix
     def setFeatures(self, features) : 
         self.features = features
+    def setCells(self, cells) : 
+        self.cells = cells
+    def setCell(self, index, cell) : 
+        self.cells[index] = cell
     # Getters
     def getImageName(self) : 
         return self.imageName
@@ -60,3 +65,7 @@ class Image :
         return self.fundamentalMatrix[targetImageID]
     def getFeatures(self) : 
         return self.features
+    def getCells(self) : 
+        return self.cells 
+    def getCell(self, index) : 
+        return self.cells[index]

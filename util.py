@@ -2,11 +2,10 @@ import numpy as np
 import cv2 as cv
 import logging
 
-from numpy.lib.function_base import angle
-
 from feature import Feature
 from image import Image
 from patch import Patch
+from cell import Cell
 from numpy.linalg import inv, pinv, svd, norm
 from numpy import dot, abs, cross
 from math import cos, pi, sqrt
@@ -74,6 +73,29 @@ def calibrateImages(images) :
         image.setOpticalCentre(opticalCentre)
         image.setOpticalAxis(opticalAxis)
 
+def applyGrid(images, gridSize, isDisplay) : 
+    for image in images : 
+        cells = [] 
+        logging.info(f'IMAGE {image.getImageID():02d}:Applying {gridSize} * {gridSize} pixel^2 Grid')
+        img = cv.imread(image.getImageName())
+        width = img.shape[0]
+        height = img.shape[1]
+        y = 0
+        index = 0
+        while y < height :
+            x = 0
+            while x < width :
+                cell = Cell((x, y), img[y:y+gridSize, x:x+gridSize],index)
+                cells.append(cell)
+                x += gridSize
+                index += 1
+            y += gridSize
+        if isDisplay :  
+            drawGrid(img, gridSize)
+            cv.imshow(f'Image {image.getImageID()}', img)
+            cv.waitKey(0)
+            cv.destroyAllWindows()
+
 def HarrisCorner(images, isDisplay) : 
     for image in images : 
         features = []
@@ -82,14 +104,16 @@ def HarrisCorner(images, isDisplay) :
         img                           = cv.imread(imageName)
         gray                          = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         gray                          = np.float32(gray)
-        dst                           = cv.cornerHarris(gray, 2, 3,0.0001)
+        dst                           = cv.cornerHarris(gray, 32, 3,0.0001)
         ret, dst                      = cv.threshold(dst,0.001*dst.max(),255,0)
         dst                           = np.uint8(dst)
         ret, labels, stats, centroids = cv.connectedComponentsWithStats(dst)
         criteria                      = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 0.001)
         corners                       = cv.cornerSubPix(gray,np.float32(centroids),(5,5),(-1,-1),criteria)
+
         for corner in corners : 
             if isDisplay : 
+                # img[dst>dst.max()]=[0,0,255]
                 cv.circle(img, (int(corner[0]), int(corner[1])), 4, (0, 0, 255), -1)
             feature = Feature(corner[0], corner[1], image)
             features.append(feature) 
@@ -108,15 +132,17 @@ def SIFT(images, isDisplay) :
         sift      = cv.SIFT_create()
         features  = []
         keypoints = sift.detect(gray, None)
+        for keypoint in keypoints : 
+            coordinate = keypoint.pt
+            if isDisplay : 
+                cv.circle(img, (int(coordinate[0]), int(coordinate[1])), 4, (0, 0, 255), -1)
+            feature    = Feature(coordinate[0], coordinate[1], image)
+            features.append(feature) 
         if isDisplay : 
-            img   = cv.drawKeypoints(gray, keypoints, img)
+            drawGrid(img, 32)
             cv.imshow(f'Image {image.getImageID()}', img)
             cv.waitKey(0)
             cv.destroyAllWindows()
-        for keypoint in keypoints : 
-            coordinate = keypoint.pt
-            feature    = Feature(coordinate[0], coordinate[1], image)
-            features.append(feature) 
         image.setFeatures(features)
 
 def computePotentialVisibleImages(referenceImage, images, isDisplay) : 
@@ -139,16 +165,18 @@ def computePotentialVisibleImages(referenceImage, images, isDisplay) :
                 potentialVisibleImages.append(sensedImage)
                 if isDisplay :
                     cv.imshow(f'Sensed Image ID : {id2}', cv.imread(sensedImage.getImageName()))
+    logging.info(f'IMAGE {id1:02d}:Total Number of Potentially Possible Images : {len(potentialVisibleImages)}')
     if isDisplay :
         cv.waitKey(0)
         cv.destroyAllWindows()
-    logging.info(f'IMAGE {id1:02d}:Total Number of Potentially Possible Images : {len(potentialVisibleImages)}')
+    for potentialVisibleImage in potentialVisibleImages : 
+        fundamentalMatrix = computeFundamentalMatrix(referenceImage, potentialVisibleImage) 
+        referenceImage.setFundamentalMatrix(potentialVisibleImage.getImageID(), fundamentalMatrix)
 
     return potentialVisibleImages
 
 def computePotentialFeatures(referenceImage, potentialVisibleImages, feature, isDisplay) : 
     id1 = referenceImage.getImageID() 
-    logging.info(f'IMAGE {id1:02d}:Computing Features Pair with {feature}')
     potentialFeatures = []
     coordinate        = np.array([
         feature.getX(), 
@@ -161,7 +189,7 @@ def computePotentialFeatures(referenceImage, potentialVisibleImages, feature, is
         if id1 == id2 : 
             continue
         else : 
-            fundamentalMatrix = computeFundamentalMatrix(referenceImage, potentialVisibleImage) 
+            fundamentalMatrix = referenceImage.getFundamentalMatrix(potentialVisibleImage.getImageID())
             features = potentialVisibleImage.getFeatures()
             epiline  = fundamentalMatrix @ coordinate
             logging.debug(f'Epiline : {epiline}')
@@ -169,6 +197,7 @@ def computePotentialFeatures(referenceImage, potentialVisibleImages, feature, is
             for feat in temp :
                 potentialFeatures.append(feat)
     potentialFeatures = sortPotentialFeatures(feature, potentialFeatures, referenceImage)
+    logging.info(f'IMAGE {referenceImage.getImageID():02d}:Total number of potential features of {feature} : {len(potentialFeatures)}.')
 
     return potentialFeatures
 
@@ -220,7 +249,7 @@ def filterFeaturesByEpipolarConstraint(features, epiline, referenceFeature, isDi
             cv.circle(img, (int(feature.getX()), int(feature.getY())), 3, (0, 255, 0), -1)
             cv.imshow(f'Sensed Image ID : {feature.getImage().getImageID()}', img)
             cv.waitKey(0)
-            cv.destroyAllWindows()        
+            cv.destroyAllWindows()
 
     return potentialFeatures
 
@@ -234,7 +263,8 @@ def sortPotentialFeatures(feature, potentialFeatures, referenceImage) :
         triangulatedPoint = triangulate(feature, potentialFeature, projectionMatrix1, projectionMatrix2)
         vector1           = triangulatedPoint - opticalCentre1
         vector2           = triangulatedPoint - opticalCentre2
-        depth             = abs(norm((vector1)) - norm((vector2)))
+        # depth             = abs(norm((vector1)) - norm((vector2)))
+        depth             = norm(vector1)
         potentialFeature.setDepth(depth)
     potentialFeatures = insertionSortByDepth(potentialFeatures)
     
@@ -289,3 +319,13 @@ def triangulate(f1, f2, m1, m2) :
         V = -1 * V 
 
     return V[-1:]
+
+def drawGrid(img, gridSize) : 
+    x = gridSize
+    y = gridSize
+    while x < img.shape[1] : 
+        cv.line(img, (x, 0), (x, img.shape[0]), (0, 255, 0), 1)
+        x += gridSize
+    while y < img.shape[0] : 
+        cv.line(img, (0, y), (img.shape[1], y), (0, 255, 0), 1)
+        y += gridSize
