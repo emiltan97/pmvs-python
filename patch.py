@@ -1,11 +1,11 @@
 class Patch : 
     # Default Constructor
-    def __init__(self, centre, normal, xAxis, yAxis, referenceImage) : 
+    def __init__(self, centre, normal, referenceImage) : 
         self.centre                 = centre 
         self.normal                 = normal 
         self.referenceImage         = referenceImage
-        self.xAxis                  = xAxis
-        self.yAxis                  = yAxis
+        # self.topLeft                = topLeft
+        # self.bottomRight            = bottomRight
         self.potentialVisibleImages = []
     # Setters
     def setCentre(self, centre) : 
@@ -16,10 +16,10 @@ class Patch :
         self.referenceImage = referenceImage
     def setPotentialVisibleImages(self, potentialVisibleImages) : 
         self.potentialVisibleImages = potentialVisibleImages
-    def setXAxis(self, xAxis) : 
-        self.xAxis = xAxis
-    def setYAxis(self, yAxis) : 
-        self.yAxis = yAxis
+    def setTopLeft(self, topLeft) : 
+        self.topLeft = topLeft
+    def setBottomRight(self, bottomRight) : 
+        self.bottomRight = bottomRight
     # Getters 
     def getCentre(self) : 
         return self.centre
@@ -29,7 +29,7 @@ class Patch :
         return self.referenceImage
     def getPotentialVisibleImages(self) : 
         return self.potentialVisibleImages
-    def getXAxis(self) : 
-        return self.xAxis
-    def getYAxis(self) : 
-        return self.yAxis
+    def getTopLeft(self) : 
+        return self.topLeft
+    def getBottomRight(self) : 
+        return self.bottomRight

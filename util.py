@@ -8,7 +8,7 @@ from patch import Patch
 from cell import Cell
 from numpy.linalg import inv, pinv, svd, norm
 from numpy import dot, abs, cross
-from math import cos, pi, sqrt
+from math import cos, pi, sqrt, acos
 
 def initImages(filename) : 
     imageFile = open(filename, "r")
@@ -145,7 +145,7 @@ def SIFT(images, isDisplay) :
             cv.destroyAllWindows()
         image.setFeatures(features)
 
-def computePotentialVisibleImages(referenceImage, images, isDisplay) : 
+def computeNeighbourImages(referenceImage, images, isDisplay) : 
     id1                    = referenceImage.getImageID()
     opticalAxis1           = referenceImage.getOpticalAxis()
     potentialVisibleImages = [] 
@@ -159,7 +159,7 @@ def computePotentialVisibleImages(referenceImage, images, isDisplay) :
             opticalAxis2 = sensedImage.getOpticalAxis() 
             angle        = dot(opticalAxis1, opticalAxis2)
             logging.debug(f'Angle between Image {id1} and Image {id2} : {angle*180/pi}')
-            if angle < cos(30 * pi/180) :
+            if angle < cos(60 * pi/180) :
                 continue
             else : 
                 potentialVisibleImages.append(sensedImage)
@@ -196,34 +196,51 @@ def computePotentialFeatures(referenceImage, potentialVisibleImages, feature, is
             temp     = filterFeaturesByEpipolarConstraint(features, epiline, feature, isDisplay)
             for feat in temp :
                 potentialFeatures.append(feat)
-    potentialFeatures = sortPotentialFeatures(feature, potentialFeatures, referenceImage)
-    logging.info(f'IMAGE {referenceImage.getImageID():02d}:Total number of potential features of {feature} : {len(potentialFeatures)}.')
 
-    return potentialFeatures
+    return potentialFeatures    
 
-def constructPatch(feature, potentialFeatures, referenceImage) : 
-    patches = []
-    for potentialFeature in potentialFeatures : 
-        sensedImage       = potentialFeature.getImage()
-        opticalCentre1    = referenceImage.getOpticalCentre()
-        projectionMatrix1 = referenceImage.getProjectionMatrix()
-        projectionMatrix2 = sensedImage.getProjectionMatrix()
-        centre            = triangulate(feature, potentialFeature, projectionMatrix1, projectionMatrix2).ravel()
-        normal            = opticalCentre1 - centre
-        # normal            = normal / normal[-1]
-        normal            = np.array([
-            normal[0], 
-            normal[1], 
-            normal[2]
-        ])
-        xAxis             = cross(normal, projectionMatrix1[0][:-1])
-        yAxis             = cross(normal, xAxis)
-        
-        patch             = Patch(centre, normal, xAxis, yAxis, referenceImage)
-        patches.append(patch)
+def constructPatch(feature, potentialFeature, referenceImage) : 
+    sensedImage       = potentialFeature.getImage()
+    opticalCentre1    = referenceImage.getOpticalCentre()
+    projectionMatrix1 = referenceImage.getProjectionMatrix()
+    projectionMatrix2 = sensedImage.getProjectionMatrix()
+    centre            = triangulate(feature, potentialFeature, projectionMatrix1, projectionMatrix2)
+    centre            = np.array([centre[0][0], centre[0][1], centre[0][2], centre[0][3]])
+    normal            = opticalCentre1 - centre
+    patch = Patch(centre, normal, referenceImage)
 
-    return patches
+    return patch
                   
+def computePotentialVisibleImages(referenceImage, potentialVisibleImages, patch, beta) :
+    for potentialVisibleImage in potentialVisibleImages :
+        projectionMatrix1 = referenceImage.getProjectionMatrix()
+        normal = patch.getNormal()
+        centre = patch.getCentre()
+        inv = pinv(projectionMatrix1)
+        scaleR = (inv[0][0] * normal[0]) + (inv[1][0] * normal[1]) + (inv[2][0] * normal[2])
+        scaleU = (inv[0][1] * normal[0]) + (inv[1][1] * normal[1]) + (inv[2][1] * normal[2])
+        right = np.array([inv[0][0]-scaleR*normal[0], inv[1][0]-scaleR*normal[1], inv[2][0]-scaleR*normal[2], 0])
+        up = np.array([inv[0][1]-scaleU*normal[0], inv[1][1]-scaleU*normal[1], inv[2][1]-scaleU*normal[2], 0])
+        scale = dot(centre, projectionMatrix1[2])
+        right *= scale
+        up *= scale
+
+        projCenter = projectionMatrix1 @ centre 
+        projRight = projectionMatrix1 @ right
+        projUp = projectionMatrix1 @ up
+        scale = 1 / projCenter[2]
+        projRight *= scale
+        projUp *= scale
+        projCenter *= scale
+
+        step = 2
+        diag = projRight + projUp
+        diag *= step
+        tl = projCenter - diag
+        br = projCenter + diag
+
+    exit()
+
 def filterFeaturesByEpipolarConstraint(features, epiline, referenceFeature, isDisplay) : 
     potentialFeatures = []
     for feature in features : 
@@ -267,9 +284,10 @@ def sortPotentialFeatures(feature, potentialFeatures, referenceImage) :
         depth             = norm(vector1)
         potentialFeature.setDepth(depth)
     potentialFeatures = insertionSortByDepth(potentialFeatures)
-    
-    return potentialFeatures               
+    logging.info(f'IMAGE {referenceImage.getImageID():02d}:Total number of potential features of {feature} : {len(potentialFeatures)}.')
 
+    return potentialFeatures              
+    
 # Compute Fundamental Matrix : Multiplication of skewform epipole, projection matrix 2 and pseudoinverse of projection matrix 1 
 def computeFundamentalMatrix(im1, im2) :
     logging.info(f'IMAGE {im1.getImageID():02d}:Computing Fundamental Matrix with IMAGE {im2.getImageID():02d}')

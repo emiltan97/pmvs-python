@@ -3,7 +3,7 @@ import logging
 import os
 
 from datetime import datetime
-from util import HarrisCorner, SIFT, applyGrid, calibrateImages, computePotentialFeatures, computePotentialVisibleImages, constructPatch, initImages
+from util import SIFT, applyGrid, calibrateImages, computeNeighbourImages, computePotentialFeatures, constructPatch, initImages, sortPotentialFeatures, computePotentialVisibleImages
 
 if __name__ == "__main__" : 
     # Initializing parser
@@ -31,8 +31,11 @@ if __name__ == "__main__" :
     SIFT(images, args.display)
     # For each feature in the refernce image, compute features on other images that satisfies the epipolar constraint
     for image in images : 
-        potentialVisibleImages = computePotentialVisibleImages(image, images, args.display)
+        potentialVisibleImages = computeNeighbourImages(image, images, args.display)
         features               = image.getFeatures()
         for feature in features :
             potentialFeatures = computePotentialFeatures(image, potentialVisibleImages, feature, args.display)
-            constructPatch(feature, potentialFeatures, image)
+            potentialFeatures = sortPotentialFeatures(feature, potentialFeatures, image)
+            for potentialFeature in potentialFeatures : 
+                patch = constructPatch(feature, potentialFeature, image)
+                patch.setPotentialVisibleImages(computePotentialVisibleImages(image, potentialVisibleImages, patch, 0.4))
