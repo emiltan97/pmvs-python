@@ -2,8 +2,10 @@ import argparse
 import logging
 import os
 
+import preProcess
+import initialMatch
+
 from datetime import datetime
-from util import SIFT, applyGrid, calibrateImages, computeNeighbourImages, computePotentialFeatures, constructPatch, initImages, sortPotentialFeatures, computePotentialVisibleImages
 
 if __name__ == "__main__" : 
     # Initializing parser
@@ -19,23 +21,8 @@ if __name__ == "__main__" :
         logging.basicConfig(level=logging.DEBUG, filename=LOG_FILENAME, filemode='w')
     else : 
         logging.basicConfig(level=logging.INFO)
-    # Registering the input images 
-    os.chdir(args.dirname) # Change current directory to the directory containing the input images
-    images = initImages(args.filename)
-    # Calibrating the images 
-    calibrateImages(images)
-    # Applying grid on each image
-    applyGrid(images, 32, args.display)
-    # Performing Harris Corner feature detection on each image 
-    # HarrisCorner(images, args.display)
-    SIFT(images, args.display)
-    # For each feature in the refernce image, compute features on other images that satisfies the epipolar constraint
-    for image in images : 
-        potentialVisibleImages = computeNeighbourImages(image, images, args.display)
-        features               = image.getFeatures()
-        for feature in features :
-            potentialFeatures = computePotentialFeatures(image, potentialVisibleImages, feature, args.display)
-            potentialFeatures = sortPotentialFeatures(feature, potentialFeatures, image)
-            for potentialFeature in potentialFeatures : 
-                patch = constructPatch(feature, potentialFeature, image)
-                patch.setPotentialVisibleImages(computePotentialVisibleImages(image, potentialVisibleImages, patch, 0.4))
+    os.chdir(args.dirname)
+    # Preprocessing 
+    images = preProcess.run(filename=args.filename, gridSize=2, isDisplay=args.display)
+    # Initial matching
+    initialMatch.run(images, args.display)

@@ -104,7 +104,7 @@ def HarrisCorner(images, isDisplay) :
         img                           = cv.imread(imageName)
         gray                          = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         gray                          = np.float32(gray)
-        dst                           = cv.cornerHarris(gray, 32, 3,0.0001)
+        dst                           = cv.cornerHarris(gray, 2, 3,0.0001)
         ret, dst                      = cv.threshold(dst,0.001*dst.max(),255,0)
         dst                           = np.uint8(dst)
         ret, labels, stats, centroids = cv.connectedComponentsWithStats(dst)
@@ -139,7 +139,7 @@ def SIFT(images, isDisplay) :
             feature    = Feature(coordinate[0], coordinate[1], image)
             features.append(feature) 
         if isDisplay : 
-            drawGrid(img, 32)
+            # drawGrid(img, 32)
             cv.imshow(f'Image {image.getImageID()}', img)
             cv.waitKey(0)
             cv.destroyAllWindows()
@@ -199,7 +199,7 @@ def computePotentialFeatures(referenceImage, potentialVisibleImages, feature, is
 
     return potentialFeatures    
 
-def constructPatch(feature, potentialFeature, referenceImage) : 
+def computePatch(feature, potentialFeature, referenceImage) : 
     sensedImage       = potentialFeature.getImage()
     opticalCentre1    = referenceImage.getOpticalCentre()
     projectionMatrix1 = referenceImage.getProjectionMatrix()
@@ -209,37 +209,80 @@ def constructPatch(feature, potentialFeature, referenceImage) :
     normal            = opticalCentre1 - centre
     patch = Patch(centre, normal, referenceImage)
 
+    # gridCoordinate1 = projectPatch(referenceImage.getProjectionMatrix(), patch)
+    # gridCoordinate2 = projectPatch(sensedImage.getProjectionMatrix(), patch)
+    # ref = cv.imread(referenceImage.getImageName())
+    # fundamentalMatrix = referenceImage.getFundamentalMatrix(potentialFeature.getImage().getImageID())
+    # coordinate        = np.array([
+    #     feature.getX(), 
+    #     feature.getY(),
+    #     1
+    # ])
+    # epiline   = fundamentalMatrix @ coordinate
+    # img = sensedImage.computeFeatureMapSatisfyingEpiline(epiline)
+    # epiline_x = (int(-epiline[2] / epiline[0]), 0)
+    # epiline_y = (int((-epiline[2] - (epiline[1]*480)) / epiline[0]), 480)
+    # cv.line(img, epiline_x, epiline_y, (255, 0, 0), 1)
+    # cv.circle(ref, (int(feature.getX()), int(feature.getY())), 4, (0, 0, 255), -1)
+    # cv.rectangle(ref, (int(gridCoordinate1[0][0][0]), int(gridCoordinate1[0][0][1])), (int(gridCoordinate1[4][4][0]), int(gridCoordinate1[4][4][1])), (0, 255, 0), -1)
+    # cv.rectangle(img, (int(gridCoordinate2[0][0][0]), int(gridCoordinate2[0][0][1])), (int(gridCoordinate2[4][4][0]), int(gridCoordinate2[4][4][1])), (0, 255, 0), -1)
+    # cv.imshow(f'Reference Image', ref)
+    # cv.imshow(f'Sensed Image', img)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
+
     return patch
                   
 def computePotentialVisibleImages(referenceImage, potentialVisibleImages, patch, beta) :
-    for potentialVisibleImage in potentialVisibleImages :
-        projectionMatrix1 = referenceImage.getProjectionMatrix()
-        normal = patch.getNormal()
-        centre = patch.getCentre()
-        inv = pinv(projectionMatrix1)
-        scaleR = (inv[0][0] * normal[0]) + (inv[1][0] * normal[1]) + (inv[2][0] * normal[2])
-        scaleU = (inv[0][1] * normal[0]) + (inv[1][1] * normal[1]) + (inv[2][1] * normal[2])
-        right = np.array([inv[0][0]-scaleR*normal[0], inv[1][0]-scaleR*normal[1], inv[2][0]-scaleR*normal[2], 0])
-        up = np.array([inv[0][1]-scaleU*normal[0], inv[1][1]-scaleU*normal[1], inv[2][1]-scaleU*normal[2], 0])
-        scale = dot(centre, projectionMatrix1[2])
-        right *= scale
-        up *= scale
+    for sensedImage in potentialVisibleImages :
+        gridCoordinate1 = projectPatch(referenceImage.getProjectionMatrix(), patch)
+        gridCoordinate2 = projectPatch(sensedImage.getProjectionMatrix(), patch)
 
-        projCenter = projectionMatrix1 @ centre 
-        projRight = projectionMatrix1 @ right
-        projUp = projectionMatrix1 @ up
-        scale = 1 / projCenter[2]
-        projRight *= scale
-        projUp *= scale
-        projCenter *= scale
+        gridVal1 = bilinearInterpolationModule(cv.imread(referenceImage.getImageName()), gridCoordinate1)
+        gridVal2 = bilinearInterpolationModule(cv.imread(sensedImage.getImageName()), gridCoordinate2)            
 
-        step = 2
-        diag = projRight + projUp
-        diag *= step
-        tl = projCenter - diag
-        br = projCenter + diag
+        print(computeNCC(gridVal1, gridVal2))
 
-    exit()
+def projectPatch(projectionMatrix, patch) : 
+    normal = patch.getNormal()
+    centre = patch.getCentre()
+    inv = pinv(projectionMatrix)
+    scaleR = (inv[0][0] * normal[0]) + (inv[1][0] * normal[1]) + (inv[2][0] * normal[2])
+    scaleU = (inv[0][1] * normal[0]) + (inv[1][1] * normal[1]) + (inv[2][1] * normal[2])
+    right = np.array([inv[0][0]-scaleR*normal[0], inv[1][0]-scaleR*normal[1], inv[2][0]-scaleR*normal[2], 0])
+    up = np.array([inv[0][1]-scaleU*normal[0], inv[1][1]-scaleU*normal[1], inv[2][1]-scaleU*normal[2], 0])
+    scale = dot(centre, projectionMatrix[2])
+    right *= scale
+    up *= scale
+
+    projCenter = projectionMatrix @ centre 
+    projRight = projectionMatrix @ right
+    projUp = projectionMatrix @ up
+    scale = 1 / projCenter[2]
+    projRight *= scale
+    projUp *= scale
+    projCenter *= scale
+
+    step = 2
+    diag = projRight + projUp
+    diag *= step
+    tl = projCenter - diag
+
+    # grid = np.empty([25, 2])
+    # index = 0 
+    grid = np.empty((5, 5, 2))
+    i = 0
+    for y in range(5) : 
+        j = 0
+        for x in range(5) : 
+            pt = np.array([tl[0] + x, tl[1] + y])
+            # grid[index] = pt
+            # index += 1
+            grid[i][j] = pt
+            j += 1
+        i += 1
+
+    return grid
 
 def filterFeaturesByEpipolarConstraint(features, epiline, referenceFeature, isDisplay) : 
     potentialFeatures = []
@@ -337,6 +380,66 @@ def triangulate(f1, f2, m1, m2) :
         V = -1 * V 
 
     return V[-1:]
+
+def computeNCC(gridVal1, gridVal2) : 
+    length = 25
+    mean1 = 0 
+    mean2 = 0
+    for i in range(gridVal1.shape[0]) :
+        for j in range(gridVal1.shape[0]) : 
+            mean1 += gridVal1[i][j]
+            mean2 += gridVal2[i][j]
+    mean1 /= length
+    mean2 /= length
+    product = 0
+    std1 = 0
+    std2 = 0
+    for i in range(gridVal1.shape[0]) :
+        for j in range(gridVal1.shape[0]) : 
+            diff1 = gridVal1[i][j] - mean1 
+            diff2 = gridVal2[i][j] = mean2
+            product += diff1 * diff2
+            std1 += diff1**2
+            std2 += diff2**2
+    stds = std1* std2
+    if stds == 0 :
+        return 0 
+    else :
+        return product / sqrt(stds)
+
+def bilinearInterpolationModule(img, grid) : 
+    gridVal = np.empty((5, 5))
+    gray1 = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    for i in range(grid.shape[0]) :
+        for j in range(grid.shape[1]) :
+            x   = grid[i][j][0]
+            y   = grid[i][j][1]
+            x1  = int(grid[i][j][0]) 
+            x2  = int(grid[i][j][0]) + 1
+            y1  = int(grid[i][j][1]) 
+            y2  = int(grid[i][j][1]) + 1
+            q11 = gray1[x1][y1]
+            q12 = gray1[x1][y2]
+            q21 = gray1[x2][y1]
+            q22 = gray1[x2][y2]
+            gridVal[i][j] = computeBilinearInterpolation(x, y, x1, x2, y1, y2, q11, q12, q21, q22)
+
+    return gridVal
+
+def computeBilinearInterpolation(x, y, x1, x2, y1, y2, q11, q12, q21, q22) : 
+    a = 1 / ((x2 - x1) * (y2 - y1))
+    b = np.array([x2-x, x-x1])
+    c = np.array([
+        [q11, q12],
+        [q21, q22]
+    ])
+    d = np.array([
+        [y2 - y],
+        [y - y1]
+    ])
+    f = a * b @ c @ d
+
+    return f 
 
 def drawGrid(img, gridSize) : 
     x = gridSize
