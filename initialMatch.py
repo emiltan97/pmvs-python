@@ -2,31 +2,31 @@ import logging
 import numpy as np
 import cv2 as cv
 
-import getPatchAxes
-import getPixel
+import triangulation
+from dep_2 import getPatchAxes, getPixel
 
+from numpy.linalg import pinv, norm
+from math import acos, cos, pi, sqrt
+from numpy import dot
 from patch import Patch
-from numpy.linalg import pinv, svd, norm
-from numpy import dot, cross
-from math import sqrt, pi, cos, acos
 
-def run(images, gamma, isDisplay) : 
+def run(images) : 
     for ref in images : 
         for feat1 in ref.features : 
             # Compute features satisfying epipolar constraints
             F = computeF(ref, images, feat1)
             # Sort features
-            F = sortF(ref, feat1, F)
+            F = sortF(ref, feat1,F)
             for feat2 in F :
                 # Initialize patch
                 patch = computePatch(feat1, feat2, ref) 
                 # Initialize Vp and V*p
-                Vp = computeVp(ref, images, patch, 60)
+                Vp = computeVp(ref, images, 60)
                 VpStar = computeVpStar(ref, patch, Vp, 0.6)
-                if len(VpStar) < gamma :
-                    continue 
-                else : 
-                    refinePatch()
+                # if len(VpStar) < gamma :
+                #     continue 
+                # else : 
+                #     refinePatch(ref, patch, VpStar)
 
 def computeF(ref, images, feat1) : 
     logging.info(f'IMAGE {ref.id:02d}:Computing epipolar features.')
@@ -51,24 +51,45 @@ def computeF(ref, images, feat1) :
                 dist = computeDistance(feat2, epiline)
                 if dist <= 5 : 
                     F.append(feat2)
+                    # dispEpiline(feat1, feat2, ref, epiline)
     
     return F
 
 def sortF(ref, feat1, F) :
     logging.info(f'IMAGE {ref.id:02d}:Sorting epipolar features.')
+    pts = []
     for feat2 in  F : 
         img = feat2.image
         projectionMatrix1 = ref.projectionMatrix
         projectionMatrix2 = img.projectionMatrix
         opticalCentre1 = ref.opticalCentre 
-        pt = triangulate(feat1, feat2, projectionMatrix1, projectionMatrix2)[0]
+        # pt = triangulation.yasuVersion(feat1, feat2, projectionMatrix1, projectionMatrix2)
+        pt = triangulation.myVersion(feat1, feat2, projectionMatrix1, projectionMatrix2)
+        pts.append(pt)
         depth = norm(pt - opticalCentre1)
         feat2.depth = depth
     F = insertionSort(F)
 
     return F
 
-def computeVp(ref, images, patch, gamma) : 
+def computePatch(feat1, feat2, ref) : 
+    logging.info(f'IMAGE {ref.id:02d}:Constructing patch.')
+    img = feat2.image
+    opticalCentre = ref.opticalCentre
+    projectionMatrix1 = ref.projectionMatrix
+    projectionMatrix2 = img.projectionMatrix
+    centre = triangulation.myVersion(feat1, feat2, projectionMatrix1, projectionMatrix2)
+    normal = opticalCentre - centre 
+    normal /= norm(normal)
+    patch = Patch(centre, normal, ref)
+    # Compute x and y vectors lying on patch
+    px, py = getPatchAxes.yasuVersion(ref, patch)
+    patch.px = px 
+    patch.py = py
+
+    return patch
+
+def computeVp(ref, images, gamma) : 
     logging.info(f'IMAGE {ref.id:02d}:Computing Vp.')
     id1 = ref.id
     Vp = []
@@ -78,114 +99,40 @@ def computeVp(ref, images, patch, gamma) :
         if id1 == id2 : 
             continue
         else : 
-            ray = img.opticalCentre - patch.centre
-            angle = acos(dot(ray, patch.normal) / (norm(ray)*norm(patch.normal)))
-            if cos(angle) < cos(gamma * pi/180) :
+            opticalAxis1 = np.array([
+                ref.projectionMatrix[2][0], 
+                ref.projectionMatrix[2][1],
+                ref.projectionMatrix[2][2]
+            ]) 
+            opticalAxis2 = np.array([
+                img.projectionMatrix[2][0], 
+                img.projectionMatrix[2][1],
+                img.projectionMatrix[2][2]
+            ]) 
+            # ray = img.opticalCentre - patch.centre
+            angle = dot(opticalAxis1, opticalAxis2)
+            # angle = acos(dot(ray, patch.normal) / (norm(ray)*norm(patch.normal)))
+            if angle < cos(gamma * pi/180) :
                 continue
             else : 
                 Vp.append(img)
     
     return Vp
 
-def computeVpStar(ref, patch, Vp, alpha) : 
+def computeVpStar(ref, patch, Vp, alpha): 
     logging.info(f'IMAGE {ref.id:02d}:Computing VpStar.')
-    id1 = ref.id
+    id1 = ref.id 
     VpStar = []
     for img in Vp : 
         id2 = img.id
-        if id1 == id2 :
-            continue
+        if id1 == id2 : 
+            continue 
         else : 
-            h = 1-ncc(ref, img, patch)
-            if h < alpha : 
+            h = 1 - ncc(ref, img, patch)
+            if h < alpha :
                 VpStar.append(img)
     
     return VpStar
-
-def refinePatch() : 
-    gStar = computeGStar()  
-    
-
-def computeGStar(ref, VpStar, patch) : 
-    gStar = 0 
-    for img in VpStar : 
-        if img.id == ref.id : 
-            continue
-        else : 
-            gStar += 1 - ncc(ref, img, patch)
-    gStar /= len(VpStar) - 1
-
-    return gStar
-
-def ncc(ref, img, patch) : 
-    # Compute x and y vectors lying on patch
-    px, py = getPatchAxes.mainVersion(ref, patch)
-    patchGrid = applyGrid(px, py ,patch)
-    
-    # Project the patch with grid onto each image 
-    projectionMatrix1 = ref.projectionMatrix
-    projectionMatrix2 = img.projectionMatrix
-    gridCoordinate1 = projectGrid(patchGrid, projectionMatrix1)
-    gridCoordinate2 = projectGrid(patchGrid, projectionMatrix2)
-
-    gridVal1 = bilinearInterpolationModule(ref, gridCoordinate1)
-    gridVal2 = bilinearInterpolationModule(img, gridCoordinate2)
-
-    return computeNCC(gridVal1, gridVal2)
-    
-def projectGrid(grid, pm) : 
-    gridCoordinate = np.empty((5, 5, 2))
-    for i in range(grid.shape[0]) :
-        for j in range(grid.shape[1]) :
-            pt = pm @ grid[i][j]
-            pt /= pt[2]
-            pt = np.array([pt[0], pt[1]])
-            gridCoordinate[i][j] = pt
-    
-    return gridCoordinate
-
-def applyGrid(px, py, patch) : 
-    grid = np.empty((5, 5, 4))
-    i = -2
-    x = 0 
-    while i <= 2 :
-        j = -2 
-        y = 0
-        while j <= 2 :
-            gridPt = patch.centre + i*px + j*py
-            grid[x][y] = gridPt
-            j += 1
-            y += 1
-        i += 1
-        x += 1
-
-    return grid
-
-def computePatch(feat1, feat2, ref) : 
-    logging.info(f'IMAGE {ref.id:02d}:Constructing patch.')
-    img = feat2.image
-    opticalCentre = ref.opticalCentre
-    projectionMatrix1 = ref.projectionMatrix
-    projectionMatrix2 = img.projectionMatrix
-    centre = triangulate(feat1, feat2, projectionMatrix1, projectionMatrix2)[0]
-    normal = opticalCentre - centre 
-    normal /= norm(normal)
-    patch = Patch(centre, normal, ref)
-
-    return patch
-
-def insertionSort(A) : 
-    i = 1 
-    while i < len(A) : 
-        j = i 
-        while j > 0 and A[j-1].depth > A[j].depth : 
-            temp   = A[j] 
-            A[j]   = A[j-1]
-            A[j-1] = temp
-            j = j - 1 
-        i = i + 1 
-    
-    return A
 
 def computeDistance(feature, epiline) : 
     distance = (abs(
@@ -215,24 +162,100 @@ def computeFundamentalMatrix(ref, img) :
 
     return fundamentalMatrix
 
-def triangulate(f1, f2, m1, m2) : 
-    u1 = f1.x
-    v1 = f1.y
-    u2 = f2.x
-    v2 = f2.y
+def dispEpiline(feat1, feat2, ref, epiline) :
+    ref2 = cv.imread(ref.name)
+    cv.circle(ref2, (int(feat1.x), int(feat1.y)), 4, (0, 255, 0), -1)
+    cv.imshow(f'Reference Image ID : {ref.id}', ref2)
+    img = feat2.image.computeFeatureMap() 
+    epiline_x = (int(-epiline[2] / epiline[0]), 0)
+    epiline_y = (int((-epiline[2] - (epiline[1]*480)) / epiline[0]), 480)
+    cv.line(img, epiline_x, epiline_y, (255, 0, 0), 1)
+    cv.circle(img, (int(feat2.x), int(feat2.y)), 3, (0, 255, 0), -1)
+    cv.imshow(f'Sensed Image ID : {feat2.image.id}', img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
-    Q = np.array([
-        u1*m1[2] - m1[0], 
-        v1*m1[2] - m1[1], 
-        u2*m2[2] - m2[0], 
-        v2*m2[2] - m2[1] 
-    ])
+def insertionSort(A) : 
+    i = 1 
+    while i < len(A) : 
+        j = i 
+        while j > 0 and A[j-1].depth > A[j].depth : 
+            temp   = A[j] 
+            A[j]   = A[j-1]
+            A[j-1] = temp
+            j = j - 1 
+        i = i + 1 
+    
+    return A
 
-    U, E, V = svd(Q) 
-    if V[-1:, -1:] < 0 : 
-        V = -1 * V 
+def ncc(ref, img, patch) : 
+    # Project the patch with grid onto each image 
+    projectionMatrix1 = ref.projectionMatrix
+    projectionMatrix2 = img.projectionMatrix
+    gridCoordinate1 = projectGrid(patch, projectionMatrix1)
+    gridCoordinate2 = projectGrid(patch, projectionMatrix2)
 
-    return V[-1:]
+    gridVal1 = bilinearInterpolationModule(ref, gridCoordinate1)
+    gridVal2 = bilinearInterpolationModule(img, gridCoordinate2)
+
+    return computeNCC(gridVal1, gridVal2)
+    
+def projectGrid(patch, pmat) : 
+
+    # centre = np.array([0.0732381, -0.0622898, -0.145384, 1])
+    # normal = np.array([-0.769807, 0.314262, 0.555551, 0])
+    # patch = Patch(centre, normal, None)
+    # patch.px = np.array([ 0.000120652, 0.000489067, -0.000109471, 0])
+    # patch.py = np.array([-0.000272776, -1.5366e-05, -0.000369284, 0])
+    # pmat = np.array([
+    #     [943.823, 3085.76, -803.971, 173.349],
+    #     [1992.27, 106.377, 2668.09, 263.376],
+    #     [0.808701, -0.279553, -0.517545, 0.667882],
+    # ])
+
+    gridCoordinate = np.empty((5, 5, 3))
+    margin = 2.5
+    # pmattmp = pmat / 2
+    # pmat = np.array([pmattmp[0], pmattmp[1], pmat[2]])
+
+    centre = pmat @ patch.centre
+    centre /= centre[2]
+    dx = pmat @ (patch.centre + patch.px) 
+    dy = pmat @ (patch.centre + patch.py) 
+    dx /= dx[2]
+    dy /= dy[2]
+    dx -= centre
+    dy -= centre
+
+    left = centre - dx*margin - dy*margin
+    for i in range(5) : 
+        temp = left
+        left = left + dy
+        print(left)
+        for j in range(5) : 
+            gridCoordinate[i][j] = temp
+            temp += dx
+    
+    exit()
+
+    return gridCoordinate
+
+def applyGrid(px, py, patch) : 
+    grid = np.empty((5, 5, 4))
+    i = -2
+    x = 0 
+    while i <= 2 :
+        j = -2 
+        y = 0
+        while j <= 2 :
+            gridPt = patch.centre + i*px + j*py
+            grid[x][y] = gridPt
+            j += 1
+            y += 1
+        i += 1
+        x += 1
+
+    return grid
 
 def bilinearInterpolationModule(img, grid) : 
     gridVal = np.empty((5, 5, 3))

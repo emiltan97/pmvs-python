@@ -5,5 +5,3 @@ class Patch :
         self.normal = normal
         self.ref = ref 
         self.Vp = None
-        self.px = None
-        self.py = None

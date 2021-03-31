@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.core.defchararray import center
 
 from numpy.linalg import pinv, norm
 from numpy import dot, cross 
@@ -42,8 +43,15 @@ def mainVersion(ref, patch) :
     px /= xdis
     py /= ydis
 
-    return px, py
+    print(ref.opticalCentre)
+    print(patch.centre)
+    print(normal)
+    print(px)
+    print(py)
 
+    exit()
+
+    return px, py
 
 def myVersion(ref, patch) :
     projectionMatrix = ref.projectionMatrix
@@ -61,6 +69,7 @@ def myVersion(ref, patch) :
     capitalX = projectionMatrixPlus @ smallx + lamda * ref.opticalCentre
     pt = projectionMatrix @ capitalX 
     ct = projectionMatrix @ patch.centre
+
 
 def goLangVersion(ref, patch) : 
     projectionMatrix = ref.projectionMatrix
@@ -83,10 +92,64 @@ def goLangVersion(ref, patch) :
             projectedGridPt = projectionMatrix @ gridPt
             projectedGridPt /= projectedGridPt[2]
             j += 1
-            print(projectedGridPt)
         i += 1
 
+    print(patch.centre)
+    print(normal)
+    print(right)
+    print(up)
+
     exit()
+
+def yasuVersion(ref, patch) : 
+    pmat= ref.projectionMatrix
+    mzaxes = np.array([pmat[2][0], pmat[2][1], pmat[2][2]])
+    mxaxes = np.array([pmat[0][0], pmat[0][1], pmat[0][2]])
+    myaxes = cross(mzaxes, mxaxes)
+    myaxes /= norm(myaxes)
+    mxaxes = cross(myaxes, mzaxes)
+    xaxe = np.array([mxaxes[0], mxaxes[1], mxaxes[2], 0])
+    yaxe = np.array([myaxes[0], myaxes[1], myaxes[2], 0])
+    fx = xaxe @ pmat[0]
+    fy = yaxe @ pmat[1]
+    fz = norm(patch.centre - ref.opticalCentre)
+    ftmp = fx + fy
+    pscale = fz / ftmp
+    # pscale = 2 * 2 * fz / ftmp
+
+    normal3 = np.array([patch.normal[0], patch.normal[1], patch.normal[2]])
+    yaxis3 = cross(normal3, mxaxes)
+    yaxis3 /= norm(yaxis3)
+    xaxis3 = cross(yaxis3, normal3)
+    
+    pxaxis = np.array([xaxis3[0], xaxis3[1], xaxis3[2], 0])
+    pyaxis = np.array([yaxis3[0], yaxis3[1], yaxis3[2], 0])
+
+    pxaxis *= pscale
+    pyaxis *= pscale 
+
+    # pmat = np.array([
+    #     [235.956, 771.439, -200.993, 43.3371],
+    #     [498.067, 26.5942, 667.023, 65.8441],
+    #     [0.808701, -0.279553, -0.517545, 0.667882]
+    # ])
+    # pmattmp = pmat / 2
+    # pmat = np.array([pmattmp[0], pmattmp[1], pmat[2]])
+
+    a = pmat @ (patch.centre + pxaxis)
+    b = pmat @ (patch.centre + pyaxis)
+    c = pmat @ (patch.centre)
+    a /= a[2]
+    b /= b[2]
+    c /= c[2]
+
+    xdis = norm(a - c)
+    ydis = norm(b - c)
+
+    pxaxis /= xdis 
+    pyaxis /= ydis
+
+    return pxaxis, pyaxis
 
 def ogVersion(ref, patch) : 
     normal = np.array([
@@ -130,16 +193,13 @@ def ogVersion(ref, patch) :
     ])
     px = (alpha * s) / norm(((projectionMatrix) @ (patch.centre+alpha)) - ((projectionMatrix) @ (patch.centre)))
     py = (beta * s) / norm(((projectionMatrix) @ (patch.centre+beta)) - ((projectionMatrix) @ (patch.centre)))
-    i = -2
-    while i <= 2 :
-        j = -2 
-        while j <= 2 :
-            gridPt = patch.centre + i*px + j*py
-            projectedGridPt = projectionMatrix @ gridPt
-            projectedGridPt /= projectedGridPt[2]
-            j += 1
-            print(projectedGridPt)
-        i += 1
+
+    print(ref.opticalCentre)
+    print(patch.centre)
+    print(normal)
+    print(px)
+    print(py)
+
     exit()
 
 def jiaChenVersion(ref, patch) :

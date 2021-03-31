@@ -1,21 +1,21 @@
 import numpy as np
 import logging
-import matplotlib.pyplot as plt
 import cv2 as cv
 
+
+from PIL import Image
 from image import Image
 from feature import Feature
 from numpy.linalg import inv
+import os
 
-def run(filename) : 
+def run(filename, gridSize, isDisplay) : 
     # Load the input images 
     images = loadImages(filename)
     # Calibrate each image
     calibrateImages(images)
     # Feature detection on each image
-    # SIFT(images)
-    HarrisCorner(images)
-    # dispOpticalCentres(images)
+    SIFT(images, isDisplay)
 
     return images
 
@@ -75,7 +75,7 @@ def calibrateImages(images) :
         image.projectionMatrix = projectionMatrix
         image.opticalCentre = opticalCentre
 
-def SIFT(images) : 
+def SIFT(images, isDisplay) :
     for image in images : 
         logging.info(f'IMAGE {image.id:02d}:Applying SIFT Feature Detection')
         imageName = image.name
@@ -86,46 +86,13 @@ def SIFT(images) :
         keypoints = sift.detect(gray, None)
         for keypoint in keypoints : 
             coordinate = keypoint.pt
-            cv.circle(img, (int(coordinate[0]), int(coordinate[1])), 4, (0, 0, 255), -1)
+            if isDisplay : 
+                cv.circle(img, (int(coordinate[0]), int(coordinate[1])), 4, (0, 0, 255), -1)
             feature = Feature(coordinate[0], coordinate[1], image)
             features.append(feature) 
+        if isDisplay : 
+            # drawGrid(img, 32)
+            cv.imshow(f'Image {image.id}', img)
+            cv.waitKey(0)
+            cv.destroyAllWindows()
         image.features = features
-
-def HarrisCorner(images) : 
-    for image in images : 
-        features = []
-        logging.info(f'IMAGE {image.id:02d}:Applying Harris Corners Detection')
-        imageName                     = image.name
-        img                           = cv.imread(imageName)
-        gray                          = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        gray                          = np.float32(gray)
-        dst                           = cv.cornerHarris(gray, 2, 3,0.0001)
-        ret, dst                      = cv.threshold(dst,0.001*dst.max(),255,0)
-        dst                           = np.uint8(dst)
-        ret, labels, stats, centroids = cv.connectedComponentsWithStats(dst)
-        criteria                      = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 0.001)
-        corners                       = cv.cornerSubPix(gray,np.float32(centroids),(5,5),(-1,-1),criteria)
-
-        for corner in corners : 
-            cv.circle(img, (int(corner[0]), int(corner[1])), 4, (0, 0, 255), -1)
-            feature = Feature(corner[0], corner[1], image)
-            features.append(feature) 
-        image.features = features
-
-def dispOpticalCentres(images) :
-    ax = plt.axes(projection='3d')
-    xdata = []
-    ydata = []
-    zdata = []
-
-    for image in images : 
-        opX = image.opticalCentre[0]
-        opY = image.opticalCentre[1]
-        opZ = image.opticalCentre[2]
-
-        xdata.append(opX)
-        ydata.append(opY)
-        zdata.append(opZ)
-
-    ax.scatter3D(xdata, ydata, zdata)
-    plt.show()
