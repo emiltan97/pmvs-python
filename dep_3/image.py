@@ -10,7 +10,7 @@ class Image :
         self.projectionMatrix = None
         self.opticalCentre = None 
         self.features = None
-        self.grid = None
+        self.cells = None
     def computeFeatureMap(self) : 
         img = cv.imread(self.name)
         for feature in self.features : 

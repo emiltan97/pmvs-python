@@ -2,16 +2,26 @@ import logging
 import numpy as np
 import cv2 as cv
 
+from dep_2 import getPatchAxes
+from dep_2 import getPixel
 import triangulation
-from dep_2 import getPatchAxes, getPixel
+from numpy.core.numeric import Inf
 
+from scipy.optimize import minimize
 from numpy.linalg import pinv, norm
-from math import acos, cos, pi, sqrt
+from math import acos, cos, pi, sin, sqrt
 from numpy import dot
 from patch import Patch
 
+ref = None 
+VpStar = None
+depthVector = None
+
 def run(images) : 
-    for ref in images : 
+    patches = []
+    for img in images : 
+        global ref
+        ref = img
         for feat1 in ref.features : 
             # Compute features satisfying epipolar constraints
             F = computeF(ref, images, feat1)
@@ -22,11 +32,22 @@ def run(images) :
                 patch = computePatch(feat1, feat2, ref) 
                 # Initialize Vp and V*p
                 Vp = computeVp(ref, images, 60)
+                global VpStar
                 VpStar = computeVpStar(ref, patch, Vp, 0.6)
-                # if len(VpStar) < gamma :
-                #     continue 
-                # else : 
-                #     refinePatch(ref, patch, VpStar)
+                # Refine patch 
+                if len(VpStar) < 3 :
+                    continue 
+                else : 
+                    patch = refinePatch(ref, patch)
+                    # Update VP Star
+                    VpStar = computeVpStar(ref, patch, Vp, 0.7)
+                    # If |V*(p)| < gamma 
+                    if len(VpStar) > 3 : 
+                        # Add patch to cell
+                        registerPatch(patch, VpStar)
+                        patches.append(patch)
+
+    return patches
 
 def computeF(ref, images, feat1) : 
     logging.info(f'IMAGE {ref.id:02d}:Computing epipolar features.')
@@ -66,7 +87,10 @@ def sortF(ref, feat1, F) :
         # pt = triangulation.yasuVersion(feat1, feat2, projectionMatrix1, projectionMatrix2)
         pt = triangulation.myVersion(feat1, feat2, projectionMatrix1, projectionMatrix2)
         pts.append(pt)
-        depth = norm(pt - opticalCentre1)
+        vector1           = pt - opticalCentre1
+        vector2           = pt - feat2.image.opticalCentre
+        depth             = abs(norm((vector1)) - norm((vector2)))
+        depth             = norm(vector1)
         feat2.depth = depth
     F = insertionSort(F)
 
@@ -89,7 +113,7 @@ def computePatch(feat1, feat2, ref) :
 
     return patch
 
-def computeVp(ref, images, gamma) : 
+def computeVp(ref, images, minAngle) : 
     logging.info(f'IMAGE {ref.id:02d}:Computing Vp.')
     id1 = ref.id
     Vp = []
@@ -109,14 +133,14 @@ def computeVp(ref, images, gamma) :
                 img.projectionMatrix[2][1],
                 img.projectionMatrix[2][2]
             ]) 
-            # ray = img.opticalCentre - patch.centre
             angle = dot(opticalAxis1, opticalAxis2)
-            # angle = acos(dot(ray, patch.normal) / (norm(ray)*norm(patch.normal)))
-            if angle < cos(gamma * pi/180) :
+            if angle < cos(minAngle * pi/180) :
                 continue
             else : 
                 Vp.append(img)
     
+    logging.info(f'IMAGE {ref.id:02d}:Vp Size = {len(Vp)}.')
+
     return Vp
 
 def computeVpStar(ref, patch, Vp, alpha): 
@@ -128,10 +152,11 @@ def computeVpStar(ref, patch, Vp, alpha):
         if id1 == id2 : 
             continue 
         else : 
-            h = 1 - ncc(ref, img, patch)
+            h = 1 - ncc(ref, img, patch) 
             if h < alpha :
                 VpStar.append(img)
-    
+    logging.info(f'IMAGE {ref.id:02d}:Vp Star Size = {len(VpStar)}.')
+
     return VpStar
 
 def computeDistance(feature, epiline) : 
@@ -161,6 +186,74 @@ def computeFundamentalMatrix(ref, img) :
     logging.debug(f'Fundamental Matrix : {fundamentalMatrix}')
 
     return fundamentalMatrix
+
+def refinePatch(ref, patch) : 
+    DoF = encode(ref, patch)
+    print("Optimizing*")
+    result = minimize(fun=funcWrapper, x0=DoF, method='Nelder-Mead', options={'maxfev':1000})
+    patch = decode(result.x)
+
+    return patch
+
+def registerPatch(patch, VpStar) : 
+    for img in VpStar : 
+        pmat = img.projectionMatrix 
+        pt = pmat @ patch.centre
+        pt /= pt[2]
+        x = int(pt/2) 
+        y = int(pt/2)
+        img.cells[x][y].patch =patch
+
+def funcWrapper(DoF) : 
+
+    patch = decode(DoF)
+
+    return computeGStar(ref, VpStar, patch)
+
+def computeGStar(ref, VpStar, patch) : 
+    print("*", end="")
+    gStar = 0 
+    for img in VpStar : 
+        if img.id == ref.id : 
+            continue
+        else : 
+            gStar += 1 - ncc(ref, img, patch)
+    gStar /= len(VpStar) - 1
+
+    return gStar
+
+def decode(DoF) :
+    depthUnit = DoF[0]
+    alpha = DoF[1]
+    beta = DoF[2] 
+    
+    x = cos(alpha) * sin(beta)
+    y = sin(alpha) * sin(beta)
+    z = cos(beta)
+
+    global depthVector
+    depthVector = depthVector * depthUnit
+    centre = ref.opticalCentre + depthVector
+    normal = np.array([x, y, z, 0])
+    patch = Patch(centre, normal, None)
+    px, py = getPatchAxes.yasuVersion(ref, patch)
+    patch.px = px 
+    patch.py = py
+
+    return patch
+
+def encode(ref, patch) :
+    global depthVector
+    depthVector = ref.opticalCentre - patch.centre
+    depthUnit = norm(depthVector)
+    depthVector = depthVector / depthUnit
+    x = patch.normal[0]
+    y = patch.normal[1]
+    z = patch.normal[2]
+    alpha = acos(x / sqrt(x**2 + y**2)) # yaw
+    beta = acos(z / sqrt(x**2 + y**2 + z**2)) # pitch
+
+    return depthUnit, alpha, beta
 
 def dispEpiline(feat1, feat2, ref, epiline) :
     ref2 = cv.imread(ref.name)
@@ -201,22 +294,8 @@ def ncc(ref, img, patch) :
     return computeNCC(gridVal1, gridVal2)
     
 def projectGrid(patch, pmat) : 
-
-    # centre = np.array([0.0732381, -0.0622898, -0.145384, 1])
-    # normal = np.array([-0.769807, 0.314262, 0.555551, 0])
-    # patch = Patch(centre, normal, None)
-    # patch.px = np.array([ 0.000120652, 0.000489067, -0.000109471, 0])
-    # patch.py = np.array([-0.000272776, -1.5366e-05, -0.000369284, 0])
-    # pmat = np.array([
-    #     [943.823, 3085.76, -803.971, 173.349],
-    #     [1992.27, 106.377, 2668.09, 263.376],
-    #     [0.808701, -0.279553, -0.517545, 0.667882],
-    # ])
-
     gridCoordinate = np.empty((5, 5, 3))
     margin = 2.5
-    # pmattmp = pmat / 2
-    # pmat = np.array([pmattmp[0], pmattmp[1], pmat[2]])
 
     centre = pmat @ patch.centre
     centre /= centre[2]
@@ -231,31 +310,11 @@ def projectGrid(patch, pmat) :
     for i in range(5) : 
         temp = left
         left = left + dy
-        print(left)
         for j in range(5) : 
             gridCoordinate[i][j] = temp
-            temp += dx
+            temp = temp + dx
     
-    exit()
-
     return gridCoordinate
-
-def applyGrid(px, py, patch) : 
-    grid = np.empty((5, 5, 4))
-    i = -2
-    x = 0 
-    while i <= 2 :
-        j = -2 
-        y = 0
-        while j <= 2 :
-            gridPt = patch.centre + i*px + j*py
-            grid[x][y] = gridPt
-            j += 1
-            y += 1
-        i += 1
-        x += 1
-
-    return grid
 
 def bilinearInterpolationModule(img, grid) : 
     gridVal = np.empty((5, 5, 3))
@@ -263,9 +322,10 @@ def bilinearInterpolationModule(img, grid) :
         for j in range(grid.shape[1]) :
             x   = grid[i][j][0]
             y   = grid[i][j][1]
-            if (int(x) < 0 or int(y) < 0 or int(x) >= 640 or int(y) >= 480) : 
+            if (int(x) < 0 or int(y) < 0 or int(x) > 640 or int(y) > 480) : 
                 gridVal[i][j] = np.array([0, 0, 0])
             else : 
+                # gridVal[i][j] = getPixel.jiaChenVersion((int(x), int(y)), img)
                 x1  = int(grid[i][j][0]) 
                 x2  = int(grid[i][j][0]) + 1
                 y1  = int(grid[i][j][1]) 

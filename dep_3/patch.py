@@ -7,3 +7,4 @@ class Patch :
         self.Vp = None
         self.px = None
         self.py = None
+        self.gridVal = None
