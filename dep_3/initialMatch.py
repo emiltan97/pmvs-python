@@ -2,8 +2,6 @@ import logging
 import numpy as np
 import cv2 as cv
 
-from dep_2 import getPatchAxes
-from dep_2 import getPixel
 import triangulation
 from numpy.core.numeric import Inf
 
@@ -11,7 +9,6 @@ from scipy.optimize import minimize
 from numpy.linalg import pinv, norm
 from math import acos, cos, pi, sin, sqrt
 from numpy import dot
-from patch import Patch
 
 ref = None 
 VpStar = None
@@ -25,27 +22,27 @@ def run(images) :
         for feat1 in ref.features : 
             # Compute features satisfying epipolar constraints
             F = computeF(ref, images, feat1)
-            # Sort features
-            F = sortF(ref, feat1,F)
-            for feat2 in F :
-                # Initialize patch
-                patch = computePatch(feat1, feat2, ref) 
-                # Initialize Vp and V*p
-                Vp = computeVp(ref, images, 60)
-                global VpStar
-                VpStar = computeVpStar(ref, patch, Vp, 0.6)
-                # Refine patch 
-                if len(VpStar) < 3 :
-                    continue 
-                else : 
-                    patch = refinePatch(ref, patch)
-                    # Update VP Star
-                    VpStar = computeVpStar(ref, patch, Vp, 0.7)
-                    # If |V*(p)| < gamma 
-                    if len(VpStar) > 3 : 
-                        # Add patch to cell
-                        registerPatch(patch, VpStar)
-                        patches.append(patch)
+            # # Sort features
+            # F = sortF(ref, feat1,F)
+            # for feat2 in F :
+            #     # Initialize patch
+            #     patch = computePatch(feat1, feat2, ref) 
+            #     # Initialize Vp and V*p
+            #     Vp = computeVp(ref, images, 60)
+            #     global VpStar
+            #     VpStar = computeVpStar(ref, patch, Vp, 0.6)
+            #     # Refine patch 
+            #     if len(VpStar) < 3 :
+            #         continue 
+            #     else : 
+            #         patch = refinePatch(ref, patch)
+            #         # Update VP Star
+            #         VpStar = computeVpStar(ref, patch, Vp, 0.7)
+            #         # If |V*(p)| < gamma 
+            #         if len(VpStar) > 3 : 
+            #             # Add patch to cell
+            #             registerPatch(patch, VpStar)
+            #             patches.append(patch)
 
     return patches
 
@@ -72,13 +69,13 @@ def computeF(ref, images, feat1) :
                 dist = computeDistance(feat2, epiline)
                 if dist <= 5 : 
                     F.append(feat2)
-                    # dispEpiline(feat1, feat2, ref, epiline)
+                    dispEpiline(feat1, feat2, ref, epiline)
+
     
     return F
 
 def sortF(ref, feat1, F) :
     logging.info(f'IMAGE {ref.id:02d}:Sorting epipolar features.')
-    pts = []
     for feat2 in  F : 
         img = feat2.image
         projectionMatrix1 = ref.projectionMatrix
@@ -86,7 +83,6 @@ def sortF(ref, feat1, F) :
         opticalCentre1 = ref.opticalCentre 
         # pt = triangulation.yasuVersion(feat1, feat2, projectionMatrix1, projectionMatrix2)
         pt = triangulation.myVersion(feat1, feat2, projectionMatrix1, projectionMatrix2)
-        pts.append(pt)
         vector1           = pt - opticalCentre1
         vector2           = pt - feat2.image.opticalCentre
         depth             = abs(norm((vector1)) - norm((vector2)))
@@ -264,6 +260,7 @@ def dispEpiline(feat1, feat2, ref, epiline) :
     epiline_y = (int((-epiline[2] - (epiline[1]*480)) / epiline[0]), 480)
     cv.line(img, epiline_x, epiline_y, (255, 0, 0), 1)
     cv.circle(img, (int(feat2.x), int(feat2.y)), 3, (0, 255, 0), -1)
+    cv.imshow(f'Reference Image ID : {ref.id}', ref2)
     cv.imshow(f'Sensed Image ID : {feat2.image.id}', img)
     cv.waitKey(0)
     cv.destroyAllWindows()

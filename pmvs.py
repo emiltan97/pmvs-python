@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import preprocess
+import initialmatch
 
 from datetime import datetime
 
@@ -22,4 +23,4 @@ if __name__ == "__main__" :
     os.chdir(args.dirname)
 
     images = preprocess.run(args.filename)
-    
+    patches = initialmatch.run(images)

@@ -5,7 +5,7 @@ class Image :
         self.ins = ins 
         self.ex = ex 
         self.pmat = None
-        self.centre = None
+        self.center = None
         self.feats = None
 
 class Feature : 
@@ -14,3 +14,12 @@ class Feature :
         self.y = y 
         self.image = image 
         self.depth = None 
+    
+class Patch : 
+    def __init__(self, center, normal, ref) : 
+        self.center = center 
+        self.normal = normal 
+        self.ref = ref 
+        self.Vp = None
+        self.px = None 
+        self.py = None

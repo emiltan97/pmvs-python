@@ -1,14 +1,13 @@
-from classes import Image
 import numpy as np
-from utils import detection
-
+import detection
+import logging
+from classes import Image
 from numpy.linalg import inv
 
 def run(filename) : 
     images = loadImages(filename)
     calibrateImages(images)
-    detection.SIFT(images, True)
-    # detection.HarrisCorner(images, True)
+    detection.myFeats(images)
 
     return images
 
@@ -33,8 +32,9 @@ def loadImages(filename) :
         ])
         img = Image(name, ins, ex, id)
         images.append(img)
-        id +=1 
-    
+        id += 1 
+    logging.info(f'Total Images : {len(images)}')
+
     return images
 
 def calibrateImages(images) : 
@@ -52,12 +52,13 @@ def calibrateImages(images) :
             ex[1][3],
             ex[2][3]
         ])
-        centre = -inv(R) @ t
-        centre = np.array([
-            centre[0],
-            centre[1],
-            centre[2],
+        center = -inv(R) @ t
+        center = np.array([
+            center[0],
+            center[1],
+            center[2],
             1
         ])
         image.pmat = pmat
-        image.centre = centre
+        image.center = center
+        logging.info(f'IMAGE {image.id:02d}:Calibration done')

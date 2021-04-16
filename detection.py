@@ -1,8 +1,30 @@
 import cv2 as cv
 import numpy as np
-
+import logging
 from classes import Feature
 
+def myFeats(images) : 
+    file = open("features.txt", 'r')
+    lines = file.readlines()
+
+    for image in images : 
+        for line in lines : 
+            words = line.split()
+            if image.name == words[0] : 
+                feats = []
+                img = cv.imread(image.name)
+                i = 0
+                while i < int(words[1]) * 2 : 
+                    feat = Feature(int(words[2+i]), int(words[3+i]), image)
+                    feats.append(feat)
+                    cv.circle(img, (int(words[2+i]), int(words[3+i])), 4, (0, 0, 255), -1)
+                    i += 2 
+        cv.imshow(f'Image ID : {image.id}', img)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+        image.feats = feats
+        logging.info(f'IMAGE {image.id:02d}:Features detection done')
+        
 def SIFT(images, isDisplay) : 
     for image in images : 
         feats = []
