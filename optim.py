@@ -1,66 +1,68 @@
+from classes import Patch
+from nlopt.nlopt import LN_BOBYQA
 import numpy as np
 import cv2 as cv
-from math import sqrt
+from math import acos, asin, cos, inf, pi, sin, sqrt
+import nlopt
+from numpy.linalg.linalg import norm
 
-depthVector = None
+g_dscale = 0 
+g_ascale = 0
+g_center = None
+g_ray = None
+g_ref = None
+g_VpStar = None
+
+def run(patch, ref, VpStar) :
+    global g_VpStar
+    global g_center
+    global g_ref
+    global g_ray 
+    global g_ascale
+
+    g_ref = ref
+    g_VpStar = VpStar
+    g_center = patch.center
+    g_ray = patch.center - ref.center
+    g_ray /= norm(g_ray)
+    g_ascale = pi / 48
+
+    p = encode(patch)
+    min_angle = -23.99999
+    max_angle =  23.99999
+    lower_bounds = np.array([-inf, min_angle, min_angle])
+    upper_bounds = np.array([inf, max_angle, max_angle])
+
+    opt = nlopt.opt(LN_BOBYQA, 3)
+    opt.set_lower_bounds(lower_bounds)
+    opt.set_upper_bounds(upper_bounds)
+    opt.set_maxeval(1000)
+    opt.set_xtol_rel(1.e-7)
+    opt.set_min_objective(myFunc)
+
+    x = []
+    for i in range(3) : 
+        x.append(max(min(p[i], upper_bounds[i]), lower_bounds[i]))
+    
+    res = opt.optimize(x)
+    center, normal = decode(res)
+    refinedPatch = Patch(center, normal, ref)
+
+    return refinedPatch
+
 
 def computeDiscrepancy(ref, image, patch) : 
-    grid1 = projectGrid(patch, ref.pmat, ref)
-    grid2 = projectGrid(patch, image.pmat, image)
-    val1 = computeGridValues(ref, grid1)
-    val2 = computeGridValues(image, grid2)
+    grid1 = projectGrid(patch, ref)
+    grid2 = projectGrid(patch, image)
+    val1 = computeGrid(ref, grid1)
+    val2 = computeGrid(image, grid2)
 
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()  
+    return ncc(val1, val2)
 
-    discrepancy = ncc2(val1, val2)
-
-    # print("{")
-    # for i in range(val1.shape[0]) : 
-    #     for j in range(val1.shape[1]) : 
-    #         for k in range(val1.shape[2]) : 
-    #             print(f'{val1[i][j][k]}, ', end="")
-    # print("}")
-    # print("{")
-    # for i in range(val1.shape[0]) : 
-    #     for j in range(val1.shape[1]) : 
-    #         for k in range(val1.shape[2]) : 
-    #             print(f'{val2[i][j][k]}, ', end="")
-    # print("}")
-
-    return discrepancy
-
-def computeGridValues(image, grid) : 
-    val = np.empty((7, 7, 3))
-    img = cv.imread(image.name)
-    for i in range(grid.shape[0]) : 
-        for j in range(grid.shape[1]) : 
-            x = grid[i][j][0]
-            y = grid[i][j][1]
-            if (x < 0 or y < 0 or x > 480 or y > 640) : 
-                val[i][j] = np.array([0, 0, 0])
-            else : 
-                # val[i][j] = img[x][y]
-                x1  = int(x)
-                x2  = int(x) + 1
-                y1  = int(y)
-                y2  = int(y) + 1
-                q11 = img[x1][y1]
-                q12 = img[x1][y2]
-                q21 = img[x2][y1]
-                q22 = img[x2][y2]
-                val[i][j] = computeBilinearInterpolation(x, y, x1, x2, y1, y2, q11, q12, q21, q22)
-                # val[i][j] = computeBilinearInterpolation2(x, y, img)
-    #         print(f"({x}, {y})")
-    #         print(f"[{val[i][j][0]}, {val[i][j][1]}, {val[i][j][2]}]")
-    # exit()
-
-    return val
-
-def projectGrid(patch, pmat, image) : 
-    gridCoordinate = np.empty((7, 7, 3))
-    margin = 3.5
-
+def projectGrid(patch, image) : 
+    gridCoordinate = np.empty((5, 5, 3))
+    margin = 2.5
+    pmat = image.pmat
     center = pmat @ patch.center
     center /= center[2]
     dx = pmat @ (patch.center + patch.px) 
@@ -71,20 +73,52 @@ def projectGrid(patch, pmat, image) :
     dy -= center
     
     left = center - dx*margin - dy*margin
-    for i in range(7) : 
+    for i in range(5) : 
         temp = left
         left = left + dy
-        for j in range(7) : 
+        for j in range(5) : 
             gridCoordinate[i][j] = temp
             temp = temp + dx
-    # img = cv.imread(image.name)
-    # cv.rectangle(img, (int(gridCoordinate[0][0][0]), int(gridCoordinate[0][0][1])), (int(gridCoordinate[4][4][0]), int(gridCoordinate[4][4][1])), (0, 255, 0), -1)
-    # cv.imshow(f'{image.name}', img)
 
     return gridCoordinate
 
+def computeGrid(image, grid) : 
+    val = np.empty((5, 5, 3))
+    img = cv.imread(image.name)
+    for i in range(grid.shape[0]) : 
+        for j in range(grid.shape[1]) : 
+            x = grid[i][j][0]
+            y = grid[i][j][1]
+            if (x < 0 or y < 0 or x > 479 or y > 639) : 
+                val[i][j] = np.array([0, 0, 0])
+            else : 
+                x1  = int(x)
+                x2  = int(x) + 1
+                y1  = int(y)
+                y2  = int(y) + 1
+                q11 = img[x1][y1]
+                q12 = img[x1][y2]
+                q21 = img[x2][y1]
+                q22 = img[x2][y2]
+                val[i][j] = computeBilinearInterpolation(x, y, x1, x2, y1, y2, q11, q12, q21, q22)
+
+    return val
+
+def computeBilinearInterpolation(x, y, x1, x2, y1, y2, q11, q12, q21, q22) : 
+    t = (x-x1) / (x2-x1)    
+    u = (y-y1) / (y2-y1)
+
+    a = q11*(1-t)*(1-u)
+    b = q21*(t)*(1-u)
+    c = q12*(u)*(1-t)
+    d = q22*(t)*(u)
+
+    f = a + b + c + d
+
+    return f 
+
 def ncc(val1, val2) : 
-    length = 75
+    length = val1.size
     m1 = 0 
     m2 = 0 
     for i in range(val1.shape[0]) : 
@@ -111,224 +145,85 @@ def ncc(val1, val2) :
 
     return res
 
-def ncc2(val1, val2) :
+def myFunc(DoF, grad) :
+    center, normal = decode(DoF) 
+    patch = Patch(center, normal, g_ref)
 
-    val1 = normalize(val1)
-    val2 = normalize(val2)
+    return computeGStar(patch)
 
-    size = 147 
-    ans = 0 
-    for i in range (size) : 
-        ans += val1[i] * val2[i]
+def computeGStar(patch) : 
+    gStar = 0 
+    for image in g_VpStar : 
+        if image.id == g_ref.id : 
+            continue 
+        else : 
+            ncc = 1 - computeDiscrepancy(g_ref, image, patch) 
+            ncc = ncc / (1 + 3 * ncc)
+            gStar += ncc
+    gStar /= len(g_VpStar) - 1 
+
+    return gStar
+
+def encode(patch) :
+    # Encoding the patch center 
+    DoF = []
+    pmat = g_ref.pmat
+    xaxis = g_ref.xaxis
+    yaxis = g_ref.yaxis
+    zaxis = g_ref.zaxis
+    xaxis0 = np.array([xaxis[0], xaxis[1], xaxis[2], 0])
+    yaxis0 = np.array([yaxis[0], yaxis[1], yaxis[2], 0])
+    fx = xaxis0 @ pmat[0]
+    fy = yaxis0 @ pmat[1]
+    ftmp = fx + fy
+    if ftmp == 0 :
+        unit = 1
+    fz = norm(patch.center - g_ref.center)
+    unit = 2 * fz / ftmp
+    unit2 = 2 * unit
+    ray = patch.center - g_ref.center 
+    ray /= norm(ray)
+    global g_dscale
+    for image in g_VpStar : 
+        diff = image.pmat @ patch.center - image.pmat @ (patch.center - ray*unit2)
+        g_dscale += norm(diff)
+    g_dscale /= len(g_VpStar) - 1 
+    m_dscales = unit2 / g_dscale
+
+    DoF.append((patch.center - g_center) @ g_ray / m_dscales)
+    # Encoding the patch normal
+    normal = np.array([patch.normal[0], patch.normal[1], patch.normal[2]])
+    if patch.normal[3] != 1 and patch.normal[3]!= 0 : 
+        normal /= patch.normal[3]
     
-    ans /= size 
+    fx = xaxis @ normal
+    fy = yaxis @ normal
+    fz = zaxis @ normal
+    temp2 = asin(max(-1, min(1, fy)))
+    cosb = cos(temp2)
+    if cosb == 0 : 
+        temp1 = 0 
+    else : 
+        sina = fx / cosb 
+        cosa = -fz / cosb
+        temp1 = acos(max(-1, min(1, cosa)))
+        if sina < 0 : 
+            temp1 = - temp1 
+    DoF.append(temp1 / g_ascale)
+    DoF.append(temp2 / g_ascale)
 
-    return ans
+    return DoF
 
-def normalize(val) : 
-    size = 147
-    size3 = int(size /3)
+def decode(DoF) :
+    center = g_center + g_dscale * DoF[0] * g_ray
+    angle1 = DoF[1] * g_ascale
+    angle2 = DoF[2] * g_ascale
 
-    temp = [] 
-    for i in range(val.shape[0]) : 
-        for j in range(val.shape[1]) :
-            for k in range(val.shape[2]) : 
-                temp.append(val[i][j][k])
+    fx = sin(angle1) * cos(angle2)
+    fy = sin(angle2)
+    fz = -cos(angle1) * cos(angle2)
 
-    ave = np.array([0, 0, 0])
-    num = 0
-    for i in range(size3) :
-        ave[0] += temp[num]
-        num += 1
-        ave[1] += temp[num]
-        num += 1
-        ave[2] += temp[num]
-        num += 1
-    ave = ave / size3 
-    ave2 = 0
-    num = 0
-    for i in range(size3) : 
-        f0 = ave[0] - temp[num]
-        num += 1
-        f1 = ave[1] - temp[num]
-        num += 1
-        f2 = ave[2] - temp[num]
-        num += 1
+    ftmp = g_ref.xaxis * fx + g_ref.yaxis * fy + g_ref.zaxis * fz 
+    normal = np.array([ftmp[0], ftmp[1], ftmp[2], 0])
 
-        ave2 += f0*f0 + f1*f1 + f2*f2
-
-    ave2 = sqrt(ave2 / size)
-    if ave2 == 0 : 
-        ave2 = 1 
-
-    num = 0
-    for i in range(size3) :
-        temp[num] -= ave[0] 
-        temp[num] /= ave2 
-        num += 1 
-        temp[num] -= ave[1] 
-        temp[num] /= ave2 
-        num += 1 
-        temp[num] -= ave[2] 
-        temp[num] /= ave2 
-        num += 1 
-
-    return temp
-
-import copy
-
-'''
-    Pure Python/Numpy implementation of the Nelder-Mead algorithm.
-    Reference: https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method
-'''
-
-
-def nelder_mead(f, x_start,
-                step=0.1, no_improve_thr=10e-6,
-                no_improv_break=10, max_iter=0,
-                alpha=1., gamma=2., rho=-0.5, sigma=0.5):
-    '''
-        @param f (function): function to optimize, must return a scalar score
-            and operate over a numpy array of the same dimensions as x_start
-        @param x_start (numpy array): initial position
-        @param step (float): look-around radius in initial step
-        @no_improv_thr,  no_improv_break (float, int): break after no_improv_break iterations with
-            an improvement lower than no_improv_thr
-        @max_iter (int): always break after this number of iterations.
-            Set it to 0 to loop indefinitely.
-        @alpha, gamma, rho, sigma (floats): parameters of the algorithm
-            (see Wikipedia page for reference)
-        return: tuple (best parameter array, best score)
-    '''
-
-    # init
-    dim = len(x_start)
-    prev_best = f(x_start)
-    no_improv = 0
-    res = [[x_start, prev_best]]
-
-    for i in range(dim):
-        x = copy.copy(x_start)
-        x[i] = x[i] + step
-        score = f(x)
-        res.append([x, score])
-
-    # simplex iter
-    iters = 0
-    while 1:
-        # order
-        res.sort(key=lambda x: x[1])
-        best = res[0][1]
-
-        # break after max_iter
-        if max_iter and iters >= max_iter:
-            return res[0]
-        iters += 1
-
-        # break after no_improv_break iterations with no improvement
-        print(best)
-
-        if best < prev_best - no_improve_thr:
-            no_improv = 0
-            prev_best = best
-        else:
-            no_improv += 1
-
-        if no_improv >= no_improv_break:
-            return res[0]
-
-        # centroid
-        x0 = [0.] * dim
-        for tup in res[:-1]:
-            for i, c in enumerate(tup[0]):
-                x0[i] += c / (len(res)-1)
-
-        # reflection
-        xr = x0 + alpha*(x0 - res[-1][0])
-        rscore = f(xr)
-        if res[0][1] <= rscore < res[-2][1]:
-            del res[-1]
-            res.append([xr, rscore])
-            continue
-
-        # expansion
-        if rscore < res[0][1]:
-            xe = x0 + gamma*(x0 - res[-1][0])
-            escore = f(xe)
-            if escore < rscore:
-                del res[-1]
-                res.append([xe, escore])
-                continue
-            else:
-                del res[-1]
-                res.append([xr, rscore])
-                continue
-
-        # contraction
-        xc = x0 + rho*(x0 - res[-1][0])
-        cscore = f(xc)
-        if cscore < res[-1][1]:
-            del res[-1]
-            res.append([xc, cscore])
-            continue
-
-        # reduction
-        x1 = res[0][0]
-        nres = []
-        for tup in res:
-            redx = x1 + sigma*(tup[0] - x1)
-            score = f(redx)
-            nres.append([redx, score])
-        res = nres
-
-def computeBilinearInterpolation2(x, y, img) : 
-    lx = int(x) 
-    ly = int(y) 
-    dx1 = x - lx
-    dy1 = y - ly
-    dx0 = 1 - dx1 
-    dy0 = 1 - dy1 
-
-    dx0 = 0.0752869
-    dx1 = 0.924713
-    dy0 = 0.957916
-    dy1 = 0.0420837
-
-    f00 = dx0*dy0
-    f01 = dx0*dy1
-    f10 = dx1*dy0
-    f11 = dx1*dy1
-    r = 0
-    g = 0 
-    b = 0 
-    val1 = img[lx][ly]
-    val2 = img[lx+1][ly+1]
-    val3 = img[lx][ly+1]
-    val4 = img[lx+1][ly]
-
-    r += 8.214 + 0.355223
-    g += val1[1]*f00 + val3[1] * f01
-    b += val1[2]*f00 + val3[2] * f01
-    r += val2[0]*f10 + val4[0] * f11
-    g += val2[1]*f10 + val4[1] * f11
-    b += val2[2]*f10 + val4[2] * f11
-
-    print(val1)
-    print(val2)
-    print(val3)
-    print(val4)
-
-    return (r, g, b)
-
-def computeBilinearInterpolation(x, y, x1, x2, y1, y2, q11, q12, q21, q22) : 
-    t = (x-x1) / (x2-x1)    
-    u = (y-y1) / (y2-y1)
-
-    a = q11*(1-t)*(1-u)
-    b = q21*(t)*(1-u)
-    c = q12*(u)*(1-t)
-    d = q22*(t)*(u)
-
-    f = a + b + c + d
-
-    return f 
+    return center, normal

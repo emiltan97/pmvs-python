@@ -1,18 +1,16 @@
-from numpy.core.numeric import cross
-from classes import Image, Feature
-import logging
 import numpy as np
-from numpy.linalg.linalg import inv, norm
-import os
+import detection
+import logging
+from classes import Image
+from numpy.linalg import inv
 
-def run(filename, dirname) : 
+def run(filename) : 
     print("==========================================================", flush=True)
     print("                       PREPROCESSING                      ", flush=True)
     print("==========================================================", flush=True)
-    os.chdir(dirname)
     images = loadImages(filename)
     calibrateImages(images)
-    featureDetection(images)
+    detection.myFeats(images)
 
     return images
 
@@ -65,31 +63,5 @@ def calibrateImages(images) :
             center[2],
             1
         ])
-        zaxis = np.array([pmat[2][0], pmat[2][1], pmat[2][2]])
-        xaxis = np.array([pmat[0][0], pmat[0][1], pmat[0][2]])
-        yaxis = cross(zaxis, xaxis)
-        yaxis /= norm(yaxis)
-        xaxis = cross(yaxis, zaxis)
-
         image.pmat = pmat
         image.center = center
-        image.xaxis = xaxis
-        image.yaxis = yaxis
-        image.zaxis = zaxis
-
-def featureDetection(images) : 
-    file = open("features.txt", 'r')
-    lines = file.readlines()
-
-    for image in images : 
-        logging.info(f'IMAGE {image.id:02d}:Detecting features...')
-        for line in lines : 
-            words = line.split()
-            if image.name == words[0] : 
-                feats = []
-                i = 0
-                while i < int(words[1]) * 2 : 
-                    feat = Feature(int(words[2+i]), int(words[3+i]), image)
-                    feats.append(feat)
-                    i += 2 
-        image.feats = feats
