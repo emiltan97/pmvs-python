@@ -4,6 +4,9 @@ from numpy.linalg import pinv, norm
 from numpy import cross
 from math import sqrt
 
+from numpy.linalg.linalg import det
+
+# my version
 def computeFundamentalMatrix(ref, img) : 
     center1 = ref.center 
     pmat1 = ref.pmat
@@ -18,6 +21,26 @@ def computeFundamentalMatrix(ref, img) :
 
     return fmat
 
+# yasu version
+def computeFundamentalMatrix2(ref, img) : 
+    pmat1 = ref.pmat
+    pmat2 = img.pmat 
+    p00 = pmat1[0]
+    p01 = pmat1[1]
+    p02 = pmat1[2]
+    p10 = pmat2[0]
+    p11 = pmat2[1]
+    p12 = pmat2[2]
+
+    fmat = np.array([
+        [det((p01, p02, p11, p12)), det((p01, p02, p12, p10)), det((p01, p02, p10, p11))],
+        [det((p02, p00, p11, p12)), det((p02, p00, p12, p10)), det((p02, p00, p10, p11))],
+        [det((p00, p01, p11, p12)), det((p00, p01, p12, p10)), det((p00, p01, p10, p11))]
+    ])
+
+    return -fmat
+
+# my version 
 def computeDistance(feat, epiline) :
     distance = (abs(
         epiline[0]*feat.x + 
@@ -29,6 +52,18 @@ def computeDistance(feat, epiline) :
     ))
 
     return distance
+
+# yasu version 
+def computeDistance2(feat1, feat2, fmat) :
+    ft1 = np.array([feat1.x, feat1.y, 1])
+    ft2 = np.array([feat2.x, feat2.y, 1])
+    ft2 = np.array([547, 91 ,1])
+    epiline = fmat @ ft2
+    temp = sqrt(epiline[0]**2 + epiline[1]**2)
+    if temp == 0 : 
+        return 0
+    epiline /= temp
+    return (abs(epiline @ ft1))
 
 def insertionSort(A) : 
     i = 1 

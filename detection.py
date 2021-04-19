@@ -8,6 +8,7 @@ def myFeats(images) :
     lines = file.readlines()
 
     for image in images : 
+        logging.info(f'IMAGE {image.id:02d}:Detecting features...')
         for line in lines : 
             words = line.split()
             if image.name == words[0] : 
@@ -17,13 +18,12 @@ def myFeats(images) :
                 while i < int(words[1]) * 2 : 
                     feat = Feature(int(words[2+i]), int(words[3+i]), image)
                     feats.append(feat)
-                    cv.circle(img, (int(words[2+i]), int(words[3+i])), 4, (0, 0, 255), -1)
+                    # cv.circle(img, (int(words[2+i]), int(words[3+i])), 4, (0, 0, 255), -1)
                     i += 2 
-        cv.imshow(f'Image ID : {image.id}', img)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
+        # cv.imshow(f'Image ID : {image.id}', img)
+        # cv.waitKey(0)
+        # cv.destroyAllWindows()
         image.feats = feats
-        logging.info(f'IMAGE {image.id:02d}:Features detection done')
         
 def SIFT(images, isDisplay) : 
     for image in images : 

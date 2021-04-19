@@ -5,6 +5,9 @@ from classes import Image
 from numpy.linalg import inv
 
 def run(filename) : 
+    print("==========================================================", flush=True)
+    print("                       PREPROCESSING                      ", flush=True)
+    print("==========================================================", flush=True)
     images = loadImages(filename)
     calibrateImages(images)
     detection.myFeats(images)
@@ -39,6 +42,7 @@ def loadImages(filename) :
 
 def calibrateImages(images) : 
     for image in images :
+        logging.info(f'IMAGE {image.id:02d}:Calibrating images...')
         ins = image.ins
         ex = image.ex
         pmat = ins @ ex
@@ -61,4 +65,3 @@ def calibrateImages(images) :
         ])
         image.pmat = pmat
         image.center = center
-        logging.info(f'IMAGE {image.id:02d}:Calibration done')
