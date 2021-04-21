@@ -1,4 +1,5 @@
 import numpy as np
+import cv2 as cv
 from numpy.core.numeric import cross
 from numpy.linalg.linalg import norm
 
@@ -14,6 +15,14 @@ class Image :
         self.xaxis = None 
         self.yaxis = None
         self.zaxis = None
+        self.cells = None
+
+    def displayFeatureMap(self) : 
+        img = cv.imread(self.name)
+        for feat in self.feats : 
+            cv.circle(img, (feat.x, feat.y), 4, (0, 0, 255), -1)
+
+        return img
 
 class Feature : 
     def __init__(self, x, y, image) :
@@ -28,6 +37,8 @@ class Patch :
         self.normal = normal 
         self.ref = ref 
         self.px, self.py = self.getPatchAxes()
+        self.cells = []
+        self.VpStar = None
 
     def getPatchAxes(self) : 
         pmat= self.ref.pmat
@@ -68,3 +79,8 @@ class Patch :
             pyaxis /= ydis
 
         return pxaxis, pyaxis
+
+class Cell : 
+    def __init__(self, center) :
+        self.patches = []
+        self.center = center

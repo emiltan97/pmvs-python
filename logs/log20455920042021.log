@@ -1,0 +1,424 @@
+INFO:root:Total Images : 4
+INFO:root:IMAGE 00:Calibrating images...
+INFO:root:IMAGE 01:Calibrating images...
+INFO:root:IMAGE 02:Calibrating images...
+INFO:root:IMAGE 03:Calibrating images...
+INFO:root:IMAGE 00:Detecting features...
+INFO:root:IMAGE 01:Detecting features...
+INFO:root:IMAGE 02:Detecting features...
+INFO:root:IMAGE 03:Detecting features...
+INFO:root:IMAGE 00:Applying Cells
+INFO:root:IMAGE 01:Applying Cells
+INFO:root:IMAGE 02:Applying Cells
+INFO:root:IMAGE 03:Applying Cells
+INFO:root:IMAGE 00:Processing feature 1....
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Processing feature 2....
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 1
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 2
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 0
+INFO:root:IMAGE 00:Processing feature 3....
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 3
+INFO:root:IMAGE 00:Patch Registered.
+INFO:root:IMAGE 00:Processing feature 4....
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 0
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Processing feature 5....
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 2
+INFO:root:IMAGE 00:Processing feature 6....
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Processing feature 7....
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Is possible patch : False
+INFO:root:IMAGE 00:Processing feature 8....
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 2
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 3
+INFO:root:IMAGE 00:Patch Registered.
+INFO:root:IMAGE 00:Processing feature 9....
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 1
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 2
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 0
+INFO:root:IMAGE 00:Processing feature 10....
+INFO:root:IMAGE 00:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 00:V*(p) size = 3
+INFO:root:IMAGE 00:Patch Registered.
+INFO:root:IMAGE 01:Processing feature 1....
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 2
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 2
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 2
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 3
+INFO:root:IMAGE 01:Patch Registered.
+INFO:root:IMAGE 01:Processing feature 2....
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 0
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 0
+INFO:root:IMAGE 01:Processing feature 3....
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 0
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 0
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 0
+INFO:root:IMAGE 01:Processing feature 4....
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Processing feature 5....
+INFO:root:IMAGE 01:Processing feature 6....
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Processing feature 7....
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Processing feature 8....
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 3
+INFO:root:IMAGE 01:Patch Registered.
+INFO:root:IMAGE 01:Processing feature 9....
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 0
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 2
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 0
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Processing feature 10....
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Is possible patch : False
+INFO:root:IMAGE 01:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 01:V*(p) size = 0
+INFO:root:IMAGE 02:Processing feature 1....
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 0
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 0
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 2
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Processing feature 2....
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 3
+INFO:root:IMAGE 02:Patch Registered.
+INFO:root:IMAGE 02:Processing feature 3....
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 0
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 0
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 0
+INFO:root:IMAGE 02:Processing feature 4....
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Processing feature 5....
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Processing feature 6....
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Processing feature 7....
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Is possible patch : False
+INFO:root:IMAGE 02:Processing feature 8....
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 3
+INFO:root:IMAGE 02:Patch Registered.
+INFO:root:IMAGE 02:Processing feature 9....
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 3
+INFO:root:IMAGE 02:Patch Registered.
+INFO:root:IMAGE 02:Processing feature 10....
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 0
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 0
+INFO:root:IMAGE 02:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 02:V*(p) size = 0
+INFO:root:IMAGE 03:Processing feature 1....
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 2
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 2
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 2
+INFO:root:IMAGE 03:Processing feature 2....
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 2
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 2
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 2
+INFO:root:IMAGE 03:Processing feature 3....
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Processing feature 4....
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 2
+INFO:root:IMAGE 03:Processing feature 5....
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Processing feature 6....
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Processing feature 7....
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Processing feature 8....
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 2
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 3
+INFO:root:IMAGE 03:Patch Registered.
+INFO:root:IMAGE 03:Processing feature 9....
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 3
+INFO:root:IMAGE 03:Patch Registered.
+INFO:root:IMAGE 03:Processing feature 10....
+INFO:root:IMAGE 03:Is possible patch : False
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 0
+INFO:root:IMAGE 03:Is possible patch : True
+INFO:root:Refining patch...
+INFO:root:IMAGE 03:V*(p) size = 2
+DEBUG:root:==================================================
+DEBUG:root:PATCH 1 : 
+DEBUG:root:Center : [-0.0556166  -0.00360079 -0.04496418  1.        ]
+DEBUG:root:Normal : [ 0.24073292  0.82147693 -0.51693515  0.        ]
+DEBUG:root:Ref : 0
+DEBUG:root:PX : [-0.0001043   0.00014733  0.00018555  0.        ]
+DEBUG:root:PY : [1.74057923e-04 7.04284166e-06 9.22494905e-05 0.00000000e+00]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0002.png
+DEBUG:root:IMAGE : dinoSR0015.png
+DEBUG:root:IMAGE : dinoSR0016.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 1 : (131, 197)
+DEBUG:root:IMAGE 2 : (107, 184)
+DEBUG:root:IMAGE 3 : (117, 200)
+DEBUG:root:==================================================
+DEBUG:root:PATCH 2 : 
+DEBUG:root:Center : [-0.05091407  0.00746586 -0.04954042  1.        ]
+DEBUG:root:Normal : [ 0.37069361  0.76737719 -0.52317985  0.        ]
+DEBUG:root:Ref : 0
+DEBUG:root:PX : [-0.00010699  0.00015351  0.00014935  0.        ]
+DEBUG:root:PY : [1.59704527e-04 5.01226206e-07 1.13892148e-04 0.00000000e+00]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0002.png
+DEBUG:root:IMAGE : dinoSR0015.png
+DEBUG:root:IMAGE : dinoSR0016.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 1 : (153, 197)
+DEBUG:root:IMAGE 2 : (132, 171)
+DEBUG:root:IMAGE 3 : (140, 192)
+DEBUG:root:==================================================
+DEBUG:root:PATCH 3 : 
+DEBUG:root:Center : [-0.01723863  0.03336332 -0.0250054   1.        ]
+DEBUG:root:Normal : [ 0.37168963 -0.43589325 -0.81966001  0.        ]
+DEBUG:root:Ref : 0
+DEBUG:root:PX : [ 3.01157571e-05  2.23374897e-04 -1.05133709e-04  0.00000000e+00]
+DEBUG:root:PY : [1.80009317e-04 1.13174363e-05 7.56098890e-05 0.00000000e+00]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0002.png
+DEBUG:root:IMAGE : dinoSR0015.png
+DEBUG:root:IMAGE : dinoSR0016.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 1 : (205, 91)
+DEBUG:root:IMAGE 2 : (210, 88)
+DEBUG:root:IMAGE 3 : (208, 87)
+DEBUG:root:==================================================
+DEBUG:root:PATCH 4 : 
+DEBUG:root:Center : [-0.06109823 -0.01213147 -0.04788602  1.        ]
+DEBUG:root:Normal : [-0.31316352 -0.19623982 -0.92920313  0.        ]
+DEBUG:root:Ref : 1
+DEBUG:root:PX : [-6.44002397e-05  1.93391627e-04 -1.91382617e-05  0.00000000e+00]
+DEBUG:root:PY : [ 0.00066154  0.00019417 -0.00026396  0.        ]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0001.png
+DEBUG:root:IMAGE : dinoSR0015.png
+DEBUG:root:IMAGE : dinoSR0016.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 0 : (100, 218)
+DEBUG:root:IMAGE 2 : (83, 198)
+DEBUG:root:IMAGE 3 : (96, 216)
+DEBUG:root:==================================================
+DEBUG:root:PATCH 5 : 
+DEBUG:root:Center : [-0.05118299  0.00707905 -0.04793937  1.        ]
+DEBUG:root:Normal : [ 0.75315392 -0.04447754 -0.65633862  0.        ]
+DEBUG:root:Ref : 1
+DEBUG:root:PX : [-8.72360718e-07  2.09697053e-04 -1.52114042e-05  0.00000000e+00]
+DEBUG:root:PY : [1.31152361e-04 1.14066745e-05 1.49725419e-04 0.00000000e+00]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0001.png
+DEBUG:root:IMAGE : dinoSR0015.png
+DEBUG:root:IMAGE : dinoSR0016.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 0 : (143, 194)
+DEBUG:root:IMAGE 2 : (132, 172)
+DEBUG:root:IMAGE 3 : (140, 191)
+DEBUG:root:==================================================
+DEBUG:root:PATCH 6 : 
+DEBUG:root:Center : [-5.06238366e-02 -4.28796828e-04 -5.37963094e-02  1.00000000e+00]
+DEBUG:root:Normal : [ 0.68562595  0.16490707 -0.70902897  0.        ]
+DEBUG:root:Ref : 2
+DEBUG:root:PX : [-9.66249627e-08  1.85544919e-04  4.30608925e-05  0.00000000e+00]
+DEBUG:root:PY : [ 2.02537781e-04 -4.30252258e-05  1.85845713e-04  0.00000000e+00]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0001.png
+DEBUG:root:IMAGE : dinoSR0002.png
+DEBUG:root:IMAGE : dinoSR0016.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 0 : (122, 201)
+DEBUG:root:IMAGE 1 : (133, 206)
+DEBUG:root:IMAGE 3 : (118, 195)
+DEBUG:root:==================================================
+DEBUG:root:PATCH 7 : 
+DEBUG:root:Center : [-0.05177564  0.00733031 -0.04926361  1.        ]
+DEBUG:root:Normal : [ 0.67456226  0.22385659 -0.70345812  0.        ]
+DEBUG:root:Ref : 2
+DEBUG:root:PX : [-7.67973826e-06  1.84144822e-04  5.12348489e-05  0.00000000e+00]
+DEBUG:root:PY : [ 2.02602092e-04 -4.18957918e-05  1.80947624e-04  0.00000000e+00]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0001.png
+DEBUG:root:IMAGE : dinoSR0002.png
+DEBUG:root:IMAGE : dinoSR0016.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 0 : (144, 197)
+DEBUG:root:IMAGE 1 : (154, 198)
+DEBUG:root:IMAGE 3 : (140, 193)
+DEBUG:root:==================================================
+DEBUG:root:PATCH 8 : 
+DEBUG:root:Center : [-0.01876955  0.01169394 -0.11031648  1.        ]
+DEBUG:root:Normal : [ 0.73479323  0.54769263 -0.40013887  0.        ]
+DEBUG:root:Ref : 2
+DEBUG:root:PX : [-6.42256959e-05  1.44153664e-04  7.93706781e-05  0.00000000e+00]
+DEBUG:root:PY : [ 2.14070292e-04 -6.90381965e-05  2.98610559e-04  0.00000000e+00]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0001.png
+DEBUG:root:IMAGE : dinoSR0002.png
+DEBUG:root:IMAGE : dinoSR0016.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 0 : (106, 197)
+DEBUG:root:IMAGE 1 : (122, 275)
+DEBUG:root:IMAGE 3 : (103, 166)
+DEBUG:root:==================================================
+DEBUG:root:PATCH 9 : 
+DEBUG:root:Center : [-0.05086559  0.00732214 -0.04884449  1.        ]
+DEBUG:root:Normal : [ 0.34967033  0.23819716 -0.90608567  0.        ]
+DEBUG:root:Ref : 3
+DEBUG:root:PX : [-2.13996068e-05  1.89016224e-04  4.14313143e-05  0.00000000e+00]
+DEBUG:root:PY : [1.80075038e-04 4.87392153e-06 7.07746016e-05 0.00000000e+00]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0001.png
+DEBUG:root:IMAGE : dinoSR0002.png
+DEBUG:root:IMAGE : dinoSR0015.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 0 : (143, 195)
+DEBUG:root:IMAGE 1 : (153, 196)
+DEBUG:root:IMAGE 2 : (132, 171)
+DEBUG:root:==================================================
+DEBUG:root:PATCH 10 : 
+DEBUG:root:Center : [-0.01236396 -0.01082399 -0.02870114  1.        ]
+DEBUG:root:Normal : [ 0.57113964 -0.1009968  -0.8146151   0.        ]
+DEBUG:root:Ref : 3
+DEBUG:root:PX : [ 1.81223238e-05  2.10393157e-04 -1.33789041e-05  0.00000000e+00]
+DEBUG:root:PY : [ 1.70417799e-04 -7.02573239e-06  1.20353693e-04  0.00000000e+00]
+DEBUG:root:======================VpStar======================
+DEBUG:root:IMAGE : dinoSR0001.png
+DEBUG:root:IMAGE : dinoSR0002.png
+DEBUG:root:IMAGE : dinoSR0015.png
+DEBUG:root:=======================CELL=======================
+DEBUG:root:IMAGE 0 : (95, 86)
+DEBUG:root:IMAGE 1 : (93, 97)
+DEBUG:root:IMAGE 2 : (100, 78)

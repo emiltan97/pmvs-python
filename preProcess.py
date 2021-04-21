@@ -1,18 +1,19 @@
 from numpy.core.numeric import cross
-from classes import Image, Feature
+from classes import Image, Feature, Cell
 import logging
 import numpy as np
 from numpy.linalg.linalg import inv, norm
 import os
+import cv2 as cv
 
-def run(filename, dirname) : 
+def run(imageFile, featureFile, beta, isDisplay) : 
     print("==========================================================", flush=True)
     print("                       PREPROCESSING                      ", flush=True)
     print("==========================================================", flush=True)
-    os.chdir(dirname)
-    images = loadImages(filename)
+    images = loadImages(imageFile)
     calibrateImages(images)
-    featureDetection(images)
+    featureDetection(images, featureFile, isDisplay)
+    setCell(images, beta)
 
     return images
 
@@ -23,7 +24,7 @@ def loadImages(filename) :
     lines = file.readlines() 
     
     for line in lines : 
-        words = line.split() 
+        words = line.split()
         name = words[0]
         ins = np.array([
             [float(words[1]), float(words[2]), float(words[3])],
@@ -77,12 +78,13 @@ def calibrateImages(images) :
         image.yaxis = yaxis
         image.zaxis = zaxis
 
-def featureDetection(images) : 
-    file = open("features.txt", 'r')
+def featureDetection(images, filename, isDisplay) : 
+    file = open(filename, 'r')
     lines = file.readlines()
 
     for image in images : 
         logging.info(f'IMAGE {image.id:02d}:Detecting features...')
+        img = cv.imread(image.name)
         for line in lines : 
             words = line.split()
             if image.name == words[0] : 
@@ -90,6 +92,34 @@ def featureDetection(images) :
                 i = 0
                 while i < int(words[1]) * 2 : 
                     feat = Feature(int(words[2+i]), int(words[3+i]), image)
+                    cv.circle(img, (feat.x, feat.y), 4, (0, 0, 255), -1)
                     feats.append(feat)
                     i += 2 
         image.feats = feats
+        if isDisplay : 
+            # img = cv.rotate(img, cv.ROTATE_90_COUNTERCLOCKWISE)
+            cv.imshow("test", img)
+            cv.waitKey(0)
+            cv.destroyAllWindows()
+
+def setCell(images, beta) : 
+    for image in images : 
+        logging.info(f'IMAGE {image.id:02d}:Applying Cells')
+        img = cv.imread(image.name)
+        width = img.shape[0]
+        height = img.shape[1]
+        cells = np.empty((int(width/beta), int(height/beta)), dtype=Cell)
+        y = 0 
+        i = 0
+        while y < height : 
+            x = 0 
+            j = 0
+            while x < width : 
+                center = np.array([x+beta/2, y+beta/2])
+                cell = Cell(center) 
+                cells[j][i] = cell
+                j += 1
+                x += beta
+            i += 1
+            y += beta
+        image.cells = cells

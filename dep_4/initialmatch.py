@@ -185,13 +185,13 @@ def computeVp(images, patch) :
 
 #     return Vp
 
-def computeVpStar(Vp, patch) : 
+def computeVpStar(Vp, patch, miu) : 
     VpStar = []
     for image in Vp : 
         if ref.id == image.id : 
             continue
         else : 
-            h = 1 - optim.computeDiscrepancy(ref, image, patch)
+            h = 1 - optim.computeDiscrepancy(ref, image, patch, miu)
             print(h)
             if h < 0.6 : 
                 VpStar.append(image)
@@ -472,7 +472,7 @@ def computeGStar(patch) :
             # res = a / sqrt(b * c)
 
             # gStar += 1 - res
-            ncc = 1 - optim.computeDiscrepancy(ref, image, patch) 
+            ncc = 1 - optim.computeDiscrepancy(ref, image, patch, miu) 
             ncc = ncc / (1 + 3 * ncc)
             gStar += ncc
             # print(gStar)

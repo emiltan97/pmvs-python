@@ -6,71 +6,91 @@ import utils
 from classes import Patch
 from numpy import dot
 import optim
+import cv2 as cv
 
-ref = None
-
-def run(images) : 
+def run(images, alpha1, alpha2, omega, sigma, gamma, beta, filename, isDisplay) : 
     print("==========================================================", flush=True)
-    print("                      INITIAL MATCHING                    ", flush=True)
+    print("                     INITIAL MATCHING                     ", flush=True)
     print("==========================================================", flush=True)
     # P <- empty
     patches = []
     # For each image I with optical center O(I)
     for I in images : 
-        print("----------", flush=True)
-        print(f'IMAGE : {I.id:02d}', flush=True)
-        print("----------", flush=True)
         # For each feature f detected in I 
         f_num = 1
         for f in I.feats :
-            logging.info(f'IMAGE {I.id:02d}:Processing feature {f_num}....')
             # F <- {Features satisfying the epipolar constraint}
-            F = computeF(I, images, f)
+            F = computeF(I, images, f, omega, isDisplay)
             # Sort F in an increasing order of distance from O(I)
             sortF(F, f)
             # For each feature f' in F
+            fp_num = 1
             for fprime in F :
+                logging.info(f'IMAGE  : {I.id+1:02d}/{len(images):02d}')
+                logging.info(f'FEAT   : {f_num:02d}/{len(I.feats):02d}')
+                logging.info(f'FEAT\'  : {fp_num:02d}/{len(F):02d}')
+                fp_num += 1
                 # Initialize c(p), n(p) and R(p) 
-                global ref 
-                ref = I
-                p = computePatch(f, fprime)
+                p = computePatch(f, fprime, I)
                 # Initialize V(p) and V*(p)
-                Vp = computeVp(images, p)
-                VpStar = computeVpStar(Vp, p, 0.6)
-                if len(VpStar) >= 3 : 
-                    logging.info(f'IMAGE {ref.id:02d}:Is possible patch : True')
-                    # Refine c(p) and n(p)
-                    new_p = refinePatch(p, VpStar)
-                    # Update V(p) and V*(p)
-                    Vp = computeVp(images, new_p)
-                    VpStar = computeVpStar(Vp, new_p, 0.7)
-                    logging.info(f'IMAGE {I.id:02d}:V*(p) size = {len(VpStar)}')
-                    # If |V*(p)| < gamma
-                    if len(VpStar) < 3 : 
-                        # Fail
-                        continue
-                    # Add p to P
-                    patches.append(new_p)
-                    logging.info(f'IMAGE {I.id:02d}:Patch Registered.')
-                    break
-                else :
-                    logging.info(f'IMAGE {I.id:02d}:Is possible patch : False')
+                Vp = computeVp(images, p, I, sigma)
+                print(f'VP : {len(Vp)}')
+                VpStar = computeVpStar(Vp, p, alpha1, I)
+                print(f'V*P : {len(VpStar)}')
+                if len(VpStar) < gamma : 
+                    logging.info("STATUS : FAILED")
+                    logging.info("------------------------------------------------")
+                    continue
+                # Refine c(p) and n(p)
+                new_p = refinePatch(p, VpStar, I)
+                # Update V(p) and V*(p)
+                Vp = computeVp(images, new_p, I, sigma)
+                VpStar = computeVpStar(Vp, new_p, alpha2, I)
+                # If |V*(p)| < gamma
+                if len(VpStar) < gamma : 
+                    # Fail
+                    logging.info("STATUS : FAILED")
+                    logging.info("------------------------------------------------")
+                    continue
+                # Add p to P
+                patches.append(new_p)
+                # Add p to the corresponding Qj(x, y) and Qj*(x, y)
+                # Remove features from the cells where p was stored
+                # Exit innermost for loop 
+                registerPatch(new_p, VpStar, beta)
+                logging.info("STATUS : SUCCESS")
+                logging.info("------------------------------------------------")
+                break
             f_num += 1
-    
+    utils.savePatches(patches, filename)
+
     return patches
 
-def computeF(I, images, f) : 
+def computeF(I, images, f, omega, isDisplay) : 
     F = [] 
+    ref = cv.imread(I.name)
     coord = np.array([f.x, f.y, 1])
+    if isDisplay :
+        cv.circle(ref, (coord[0], coord[1]), 4, (0, 255, 0), -1)
     for image in images : 
         if I.id == image.id :
             continue
         else : 
             fmat = utils.fundamentalMatrix(I, image)
             epiline = fmat @ coord 
-            for feat in image.feats : 
+            for feat in image.feats :
                 dist = utils.distance(feat, epiline)
-                if dist <= 5 : 
+                if isDisplay :
+                    img = image.displayFeatureMap() 
+                    epiline_x = (int(-epiline[2] / epiline[0]), 0)
+                    epiline_y = (int((-epiline[2] - (epiline[1]*ref.shape[0])) / epiline[0]), ref.shape[0]) 
+                    cv.line(img, epiline_x, epiline_y, (255, 0, 0), 1)
+                    cv.circle(img, (feat.x, feat.y), 3, (0, 255, 0), -1)
+                    cv.imshow(f'Ref : {I.id}', ref)
+                    cv.imshow(f'Img : {image.id}, Dist : {dist}', img)
+                    cv.waitKey(0)
+                    cv.destroyAllWindows()
+                if dist <= omega: 
                     F.append(feat)
     
     return F
@@ -83,7 +103,7 @@ def sortF(F, f) :
         feat.depth = depth
     utils.insertionSort(F)
 
-def computePatch(f, fprime) : 
+def computePatch(f, fprime, ref) : 
     center = utils.triangulate(f, fprime, ref.pmat, fprime.image.pmat)
     normal = ref.center - center
     normal /= norm(normal)
@@ -91,7 +111,7 @@ def computePatch(f, fprime) :
 
     return patch
 
-def computeVp(images, patch) : 
+def computeVp(images, patch, ref, sigma) : 
     Vp = [] 
     Vp.append(ref) 
     for image in images : 
@@ -99,27 +119,40 @@ def computeVp(images, patch) :
             continue 
         else : 
             angle = (dot(patch.normal, (image.center - patch.center))) / (norm(image.center - patch.center)) 
-            if angle < cos(60 * pi / 180) : 
+            if angle < cos(sigma * pi / 180) : 
                 continue 
             else : 
                 Vp.append(image)
     
     return Vp
 
-def computeVpStar(Vp, p, alpha) : 
+def computeVpStar(Vp, p, alpha, ref) : 
     VpStar = []
+    VpStar.append(ref)
     for image in Vp : 
         if ref.id == image.id : 
             continue 
         else :
             h = 1 - optim.computeDiscrepancy(ref, image, p)
+            print(f'Discrepancy : {h}')
             if h < alpha :
                 VpStar.append(image) 
 
     return VpStar
     
-def refinePatch(patch, VpStar) : 
-    logging.info(f'Refining patch...')
+def refinePatch(patch, VpStar, ref) : 
     refinedPatch = optim.run(patch, ref, VpStar)
 
     return refinedPatch
+
+def registerPatch(patch, VpStar, beta) : 
+    for img in VpStar : 
+        pmat = img.pmat
+        pt = pmat @ patch.center
+        pt /= pt[2]
+        x = int(pt[0]/beta) 
+        y = int(pt[1]/beta)
+        img.cells[x][y].patches.append(patch)
+        cell = np.array([img.id, [x, y]])
+        patch.cells.append(cell)
+        patch.VpStar = VpStar

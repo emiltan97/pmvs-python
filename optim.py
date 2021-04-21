@@ -61,7 +61,7 @@ def computeDiscrepancy(ref, image, patch) :
 
 def projectGrid(patch, image) : 
     gridCoordinate = np.empty((5, 5, 3))
-    margin = 2.5
+    margin = 5 / 2
     pmat = image.pmat
     center = pmat @ patch.center
     center /= center[2]
@@ -85,11 +85,13 @@ def projectGrid(patch, image) :
 def computeGrid(image, grid) : 
     val = np.empty((5, 5, 3))
     img = cv.imread(image.name)
+    width = img.shape[0]
+    height = img.shape[1]
     for i in range(grid.shape[0]) : 
         for j in range(grid.shape[1]) : 
             x = grid[i][j][0]
             y = grid[i][j][1]
-            if (x < 0 or y < 0 or x > 479 or y > 639) : 
+            if (x < 0 or y < 0 or x > width - 1 or y > height - 1) : 
                 val[i][j] = np.array([0, 0, 0])
             else : 
                 x1  = int(x)
@@ -158,7 +160,6 @@ def computeGStar(patch) :
             continue 
         else : 
             ncc = 1 - computeDiscrepancy(g_ref, image, patch) 
-            ncc = ncc / (1 + 3 * ncc)
             gStar += ncc
     gStar /= len(g_VpStar) - 1 
 
@@ -188,9 +189,9 @@ def encode(patch) :
         diff = image.pmat @ patch.center - image.pmat @ (patch.center - ray*unit2)
         g_dscale += norm(diff)
     g_dscale /= len(g_VpStar) - 1 
-    m_dscales = unit2 / g_dscale
+    g_dscale = unit2 / g_dscale
 
-    DoF.append((patch.center - g_center) @ g_ray / m_dscales)
+    DoF.append((patch.center - g_center) @ g_ray / g_dscale)
     # Encoding the patch normal
     normal = np.array([patch.normal[0], patch.normal[1], patch.normal[2]])
     if patch.normal[3] != 1 and patch.normal[3]!= 0 : 

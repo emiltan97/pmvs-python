@@ -1,7 +1,12 @@
+import cv2 as cv
+from classes import Patch
 from math import sqrt
 import numpy as np
 from numpy.linalg import pinv
-from numpy.linalg.linalg import svd
+from numpy.linalg.linalg import inv, norm, svd
+from numpy import dot
+import optim
+import os
 
 def fundamentalMatrix(ref, img) : 
     center1 = ref.center 
@@ -57,3 +62,167 @@ def insertionSort(A) :
             A[j-1] = temp
             j = j - 1 
         i = i + 1 
+
+def getImage(id, images) : 
+    for image in images : 
+        if id == image.id :
+            return image
+
+def identifyCell(cell, image, p, rho, alpha) :
+    for pprime in cell.patches :
+        if isNeighbour(p, pprime, rho) :
+            return False
+        if isDiscontinue(pprime, image, alpha) : 
+            return False
+
+    return True
+
+def isNeighbour(p1, p2, rho) :
+    cp = p1.center
+    cpprime = p2.center
+    np = p1.normal
+    npprime = p2.normal
+
+    res = abs(dot((cp - cpprime), np)) + abs(dot((cp - cpprime), npprime)) 
+
+    if res < rho : 
+        return True
+    
+    return False
+
+def isDiscontinue(patch, image, alpha) :
+    if 1 - optim.computeDiscrepancy(patch.ref, image, patch, miu) < alpha : 
+        return True
+    return False
+
+def computeCenter(patch, cell) :
+    x = np.array([cell.center[0], cell.center[1], 1])
+    R = np.array([
+        [patch.ref.pmat[0][0], patch.ref.pmat[0][1], patch.ref.pmat[0][2]],
+        [patch.ref.pmat[1][0], patch.ref.pmat[1][1], patch.ref.pmat[1][2]],
+        [patch.ref.pmat[2][0], patch.ref.pmat[2][1], patch.ref.pmat[2][2]]
+    ])
+    t = np.array([
+        patch.ref.pmat[0][3],
+        patch.ref.pmat[1][3],
+        patch.ref.pmat[2][3]
+    ])
+    X = inv(R) @ (x - t)
+    X = np.array([X[0], X[1], X[2], 1])
+    vect = X - patch.ref.center
+
+    t = -(patch.normal @ X - patch.normal @ patch.center) / (patch.normal @ vect)
+
+    return X + t*vect
+
+def hasImage(image, Vp) :
+    for img in Vp :
+        if img.id == image.id :
+            return True
+    return False
+
+def savePatch(patch, filename) : 
+    file = open(filename, 'a')
+    file.write(str(patch.ref.id)); file.write(" ")
+    file.write(str(patch.center[0])); file.write(" ")
+    file.write(str(patch.center[1])); file.write(" ")
+    file.write(str(patch.center[2])); file.write(" ")
+    file.write(str(patch.center[3])); file.write(" ")
+    file.write(str(patch.normal[0])); file.write(" ")
+    file.write(str(patch.normal[1])); file.write(" ")
+    file.write(str(patch.normal[2])); file.write(" ")
+    file.write(str(patch.normal[3])); file.write(" ")
+    for cell in patch.cells : 
+        file.write(str(cell[0])); file.write(" ")
+        file.write(str(cell[1][0])); file.write(" ")
+        file.write(str(cell[1][1])); file.write(" ")
+    file.write("\n")    
+    file.close()
+
+def savePatches(patches, filename) : 
+    file = open(filename, 'w+')
+    for patch in patches :
+        file.write(str(patch.ref.id)); file.write(" ")
+        file.write(str(patch.center[0])); file.write(" ")
+        file.write(str(patch.center[1])); file.write(" ")
+        file.write(str(patch.center[2])); file.write(" ")
+        file.write(str(patch.center[3])); file.write(" ")
+        file.write(str(patch.normal[0])); file.write(" ")
+        file.write(str(patch.normal[1])); file.write(" ")
+        file.write(str(patch.normal[2])); file.write(" ")
+        file.write(str(patch.normal[3])); file.write(" ")
+        for cell in patch.cells : 
+            file.write(str(cell[0])); file.write(" ")
+            file.write(str(cell[1][0])); file.write(" ")
+            file.write(str(cell[1][1])); file.write(" ")
+        file.write("\n")    
+    file.close()
+
+def loadPatches(images, filename) : 
+    file = open(filename, 'r')
+    lines = file.readlines()
+    patches = []
+    for line in lines : 
+        words = line.split() 
+        center = np.empty(4)
+        normal = np.empty(4)
+        ref = getImage(int(words.pop(0)), images)
+        for i in range(len(center)) :   
+            center[i] = float(words.pop(0))
+        for i in range(len(normal)) : 
+            normal[i] = float(words.pop(0))
+        patch = Patch(center, normal, ref)
+        ids = []
+        while words : 
+            id = int(words.pop(0))
+            ids.append(id)
+            x = int(words.pop(0))
+            y = int(words.pop(0))
+            getImage(id, images).cells[x][y].patches.append(patch)
+            cell = np.array([id, [x, y]])
+            patch.cells.append(cell)
+        VpStar = []
+        while ids : 
+            VpStar.append(getImage(ids.pop(0), images))            
+        patch.VpStar = VpStar
+        patches.append(patch)
+
+    return patches
+
+def getColor(patch) :
+    ref = patch.ref 
+    center = patch.center 
+    pmat = ref.pmat 
+    img = cv.imread(ref.name)
+    coord = pmat @ center
+    coord /= coord[2]
+    
+    return img[int(coord[0])][int(coord[1])]
+
+def writePly(patches, filename) :
+    file = open(filename, 'w+')
+    file.write("ply\n")
+    file.write("format ascii 1.0\n")
+    file.write(f'element vertex {len(patches)}\n')
+    file.write("property float x\n")
+    file.write("property float y\n")
+    file.write("property float z\n")
+    file.write("property float nx\n")
+    file.write("property float ny\n")
+    file.write("property float nz\n")
+    file.write("property uchar diffuse_red\n")
+    file.write("property uchar diffuse_green\n")
+    file.write("property uchar diffuse_blue\n")
+    file.write("end_header\n")
+    for patch in patches : 
+        file.write(str(patch.center[0])); file.write(" ")
+        file.write(str(patch.center[1])); file.write(" ")
+        file.write(str(patch.center[2])); file.write(" ")
+        file.write(str(patch.normal[0])); file.write(" ")
+        file.write(str(patch.normal[1])); file.write(" ")
+        file.write(str(patch.normal[2])); file.write(" ")
+        color = getColor(patch)
+        file.write(str(color[0])); file.write(" ")
+        file.write(str(color[1])); file.write(" ")
+        file.write(str(color[2])); file.write(" ")
+        file.write("\n")
