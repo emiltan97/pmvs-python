@@ -84,3 +84,4 @@ class Cell :
     def __init__(self, center) :
         self.patches = []
         self.center = center
+        self.feats = []

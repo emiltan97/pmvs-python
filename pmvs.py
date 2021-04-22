@@ -16,9 +16,11 @@ if __name__ == "__main__" :
     parser.add_argument('--config', type=str, default="txt/config.txt")
     parser.add_argument('--dirname', type=str, default="data/dinoSR/")
     parser.add_argument('--outname', type=str, default="out.ply")
+    parser.add_argument('--numpatch', type=int, default="9999")
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-l', '--load', action='store_true')
-    parser.add_argument('-d', "--display", action='store_true')
+    parser.add_argument('-d', '--display', action='store_true')
+    parser.add_argument('-a', '--auto', action='store_true')
     args = parser.parse_args()
     # Verbose settings
     if args.verbose : 
@@ -39,6 +41,7 @@ if __name__ == "__main__" :
     rho = float(words[5])
     sigma = int(words[6]) 
     omega = int(words[7])
+    file.close()
     # Preprocessing 
     images = preprocess.run(args.filename1, args.filename2, beta, args.display)
     # Initial Matching
@@ -46,12 +49,22 @@ if __name__ == "__main__" :
         patches = initialmatch.run(images, alpha1, alpha2, omega, sigma, gamma, beta, args.filename3, args.display)
     else :
         patches = utils.loadPatches(images, args.filename3)
-    # # Iteration n=3 of expansion and filtering
-    # iter = 1 
-    # for i in range(n) : 
-    #     print( "==========================================================")
-    #     print(f"                        EXPANSION {iter}                        ")
-    #     print( "==========================================================")
-    #     expansion.run(patches, images, alpha1, alpha2, gamma, sigma, rho, args.filename3)
-    #     iter += 1
+    # Iteration n=3 of expansion and filtering
+    iter = 1 
+    for i in range(n) : 
+        print( "==========================================================")
+        print(f"                        EXPANSION {iter}                        ")
+        print( "==========================================================")
+        expansion.run(patches, images, alpha1, alpha2, gamma, sigma, rho, beta, args.numpatch, args.filename3)
+        iter += 1
+        if not args.auto : 
+            str = input("\nContinue? [y/n]\n")
+            if str.lower() == 'n' :
+                break
+        else : 
+            logging.info("------------------------------------------------")
+            logging.info("Writing PLY...")
+            utils.writePly(patches, args.outname)
+    logging.info("------------------------------------------------")
+    logging.info("Writing PLY...")
     utils.writePly(patches, args.outname)

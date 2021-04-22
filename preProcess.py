@@ -12,8 +12,8 @@ def run(imageFile, featureFile, beta, isDisplay) :
     print("==========================================================", flush=True)
     images = loadImages(imageFile)
     calibrateImages(images)
-    featureDetection(images, featureFile, isDisplay)
     setCell(images, beta)
+    featureDetection(images, featureFile, beta, isDisplay)
 
     return images
 
@@ -78,7 +78,7 @@ def calibrateImages(images) :
         image.yaxis = yaxis
         image.zaxis = zaxis
 
-def featureDetection(images, filename, isDisplay) : 
+def featureDetection(images, filename, beta, isDisplay) : 
     file = open(filename, 'r')
     lines = file.readlines()
 
@@ -92,8 +92,16 @@ def featureDetection(images, filename, isDisplay) :
                 i = 0
                 while i < int(words[1]) * 2 : 
                     feat = Feature(int(words[2+i]), int(words[3+i]), image)
-                    cv.circle(img, (feat.x, feat.y), 4, (0, 0, 255), -1)
+                    if isDisplay : 
+                        cv.circle(img, (feat.x, feat.y), 4, (0, 0, 255), -1)
                     feats.append(feat)
+                    a = -2 
+                    while a < 3 : 
+                        b = -2 
+                        while b < 3 : 
+                            image.cells[int(feat.x/beta+b)][int(feat.y/beta+a)].feats.append(feat)
+                            b += 1
+                        a += 1
                     i += 2 
         image.feats = feats
         if isDisplay : 
@@ -106,8 +114,8 @@ def setCell(images, beta) :
     for image in images : 
         logging.info(f'IMAGE {image.id:02d}:Applying Cells')
         img = cv.imread(image.name)
-        width = img.shape[0]
-        height = img.shape[1]
+        width = img.shape[1]
+        height = img.shape[0]
         cells = np.empty((int(width/beta), int(height/beta)), dtype=Cell)
         y = 0 
         i = 0

@@ -85,8 +85,8 @@ def projectGrid(patch, image) :
 def computeGrid(image, grid) : 
     val = np.empty((5, 5, 3))
     img = cv.imread(image.name)
-    width = img.shape[0]
-    height = img.shape[1]
+    width = img.shape[1]
+    height = img.shape[0]
     for i in range(grid.shape[0]) : 
         for j in range(grid.shape[1]) : 
             x = grid[i][j][0]
@@ -98,10 +98,10 @@ def computeGrid(image, grid) :
                 x2  = int(x) + 1
                 y1  = int(y)
                 y2  = int(y) + 1
-                q11 = img[x1][y1]
-                q12 = img[x1][y2]
-                q21 = img[x2][y1]
-                q22 = img[x2][y2]
+                q11 = img[y1][x1]
+                q12 = img[y1][x2]
+                q21 = img[y2][x1]
+                q22 = img[y2][x2]
                 val[i][j] = computeBilinearInterpolation(x, y, x1, x2, y1, y2, q11, q12, q21, q22)
 
     return val

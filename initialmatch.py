@@ -34,9 +34,7 @@ def run(images, alpha1, alpha2, omega, sigma, gamma, beta, filename, isDisplay) 
                 p = computePatch(f, fprime, I)
                 # Initialize V(p) and V*(p)
                 Vp = computeVp(images, p, I, sigma)
-                print(f'VP : {len(Vp)}')
                 VpStar = computeVpStar(Vp, p, alpha1, I)
-                print(f'V*P : {len(VpStar)}')
                 if len(VpStar) < gamma : 
                     logging.info("STATUS : FAILED")
                     logging.info("------------------------------------------------")
@@ -56,10 +54,10 @@ def run(images, alpha1, alpha2, omega, sigma, gamma, beta, filename, isDisplay) 
                 patches.append(new_p)
                 # Add p to the corresponding Qj(x, y) and Qj*(x, y)
                 # Remove features from the cells where p was stored
-                # Exit innermost for loop 
-                registerPatch(new_p, VpStar, beta)
+                registerPatch(new_p, VpStar, beta, True)
                 logging.info("STATUS : SUCCESS")
                 logging.info("------------------------------------------------")
+                # Exit innermost for loop 
                 break
             f_num += 1
     utils.savePatches(patches, filename)
@@ -134,7 +132,6 @@ def computeVpStar(Vp, p, alpha, ref) :
             continue 
         else :
             h = 1 - optim.computeDiscrepancy(ref, image, p)
-            print(f'Discrepancy : {h}')
             if h < alpha :
                 VpStar.append(image) 
 
@@ -145,14 +142,18 @@ def refinePatch(patch, VpStar, ref) :
 
     return refinedPatch
 
-def registerPatch(patch, VpStar, beta) : 
+def registerPatch(patch, VpStar, beta, isInitial) : 
     for img in VpStar : 
+        if img.id == patch.ref.id : 
+            continue
         pmat = img.pmat
         pt = pmat @ patch.center
         pt /= pt[2]
         x = int(pt[0]/beta) 
         y = int(pt[1]/beta)
         img.cells[x][y].patches.append(patch)
+        if isInitial: 
+            utils.removeFeatures(img, img.cells[x][y])
         cell = np.array([img.id, [x, y]])
         patch.cells.append(cell)
         patch.VpStar = VpStar

@@ -63,6 +63,12 @@ def insertionSort(A) :
             j = j - 1 
         i = i + 1 
 
+def removeFeatures(image, cell) : 
+    for feat1 in image.feats : 
+        for feat2 in cell.feats : 
+            if feat1 == feat2 : 
+                image.feats.remove(feat1)
+
 def getImage(id, images) : 
     for image in images : 
         if id == image.id :
@@ -85,7 +91,7 @@ def isNeighbour(p1, p2, rho) :
 
     res = abs(dot((cp - cpprime), np)) + abs(dot((cp - cpprime), npprime)) 
 
-    if res < rho : 
+    if res < 2*rho : 
         return True
     
     return False
@@ -186,7 +192,8 @@ def loadPatches(images, filename) :
             VpStar.append(getImage(ids.pop(0), images))            
         patch.VpStar = VpStar
         patches.append(patch)
-
+    file.close()
+    
     return patches
 
 def getColor(patch) :
@@ -197,7 +204,7 @@ def getColor(patch) :
     coord = pmat @ center
     coord /= coord[2]
     
-    return img[int(coord[0])][int(coord[1])]
+    return img[int(coord[1])][int(coord[0])]
 
 def writePly(patches, filename) :
     file = open(filename, 'w+')

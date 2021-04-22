@@ -1,0 +1,163 @@
+INFO:root:Total Images : 4
+INFO:root:IMAGE 00:Calibrating images...
+INFO:root:IMAGE 01:Calibrating images...
+INFO:root:IMAGE 02:Calibrating images...
+INFO:root:IMAGE 03:Calibrating images...
+INFO:root:IMAGE 00:Applying Cells
+INFO:root:IMAGE 01:Applying Cells
+INFO:root:IMAGE 02:Applying Cells
+INFO:root:IMAGE 03:Applying Cells
+INFO:root:IMAGE 00:Detecting features...
+INFO:root:IMAGE 01:Detecting features...
+INFO:root:IMAGE 02:Detecting features...
+INFO:root:IMAGE 03:Detecting features...
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 01/10
+INFO:root:FEAT'  : 01/06
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 01/10
+INFO:root:FEAT'  : 02/06
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 02/10
+INFO:root:FEAT'  : 01/04
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 02/10
+INFO:root:FEAT'  : 02/04
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 03/10
+INFO:root:FEAT'  : 01/02
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 04/10
+INFO:root:FEAT'  : 01/03
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 05/10
+INFO:root:FEAT'  : 01/03
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 05/10
+INFO:root:FEAT'  : 02/03
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 05/10
+INFO:root:FEAT'  : 03/03
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 06/10
+INFO:root:FEAT'  : 01/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 06/10
+INFO:root:FEAT'  : 02/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 07/10
+INFO:root:FEAT'  : 01/01
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 08/10
+INFO:root:FEAT'  : 01/03
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 08/10
+INFO:root:FEAT'  : 02/03
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 09/10
+INFO:root:FEAT'  : 01/03
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 01/04
+INFO:root:FEAT   : 10/10
+INFO:root:FEAT'  : 01/03
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 02/04
+INFO:root:FEAT   : 01/03
+INFO:root:FEAT'  : 01/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 02/04
+INFO:root:FEAT   : 01/03
+INFO:root:FEAT'  : 02/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 02/04
+INFO:root:FEAT   : 03/03
+INFO:root:FEAT'  : 01/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 02/04
+INFO:root:FEAT   : 03/03
+INFO:root:FEAT'  : 02/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 03/04
+INFO:root:FEAT   : 01/05
+INFO:root:FEAT'  : 01/01
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 03/04
+INFO:root:FEAT   : 02/05
+INFO:root:FEAT'  : 01/02
+INFO:root:STATUS : SUCCESS
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 03/04
+INFO:root:FEAT   : 03/05
+INFO:root:FEAT'  : 01/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 03/04
+INFO:root:FEAT   : 03/05
+INFO:root:FEAT'  : 02/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 03/04
+INFO:root:FEAT   : 04/05
+INFO:root:FEAT'  : 01/01
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 03/04
+INFO:root:FEAT   : 05/05
+INFO:root:FEAT'  : 01/01
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 04/04
+INFO:root:FEAT   : 01/02
+INFO:root:FEAT'  : 01/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 04/04
+INFO:root:FEAT   : 01/02
+INFO:root:FEAT'  : 02/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 04/04
+INFO:root:FEAT   : 02/02
+INFO:root:FEAT'  : 01/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------
+INFO:root:IMAGE  : 04/04
+INFO:root:FEAT   : 02/02
+INFO:root:FEAT'  : 02/02
+INFO:root:STATUS : FAILED
+INFO:root:------------------------------------------------

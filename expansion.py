@@ -6,8 +6,9 @@ import utils
 from numpy import dot
 import logging
 
-def run(P, images, alpha1, alpha2, gamma, sigma, rho, filename) : 
+def run(P, images, alpha1, alpha2, gamma, sigma, rho, beta, numPatches, filename) : 
     p_num = 1 
+    patchGenerated = 0
     # While P is not empty
     while len(P) > 0 : 
         # Pick and remove a patch p from P 
@@ -46,10 +47,13 @@ def run(P, images, alpha1, alpha2, gamma, sigma, rho, filename) :
                 # Add p' to P
                 P.append(new_pprime)
                 # Add p' to corresponding Qj(x, y) and Q*j(x, y)
-                registerPatch(new_pprime, VpStar)
+                registerPatch(new_pprime, VpStar, beta, False)
+                patchGenerated += 1
                 logging.info("STATUS : SUCCESS")
                 logging.info("------------------------------------------------")
                 utils.savePatch(new_pprime, filename)
+                if patchGenerated >= numPatches : 
+                    return
             c_num += 1
         p_num += 1
 
