@@ -1,10 +1,11 @@
 from math import cos, pi
 from numpy.linalg.linalg import norm
-from initialmatch import computeVpStar, refinePatch, registerPatch
+from initialmatch import computeVpStar, refinePatch
 from classes import Patch
 import utils
 from numpy import dot
 import logging
+import numpy as np
 
 def run(P, images, alpha1, alpha2, gamma, sigma, rho, beta, numPatches, filename) : 
     p_num = 1 
@@ -34,6 +35,7 @@ def run(P, images, alpha1, alpha2, gamma, sigma, rho, beta, numPatches, filename
                     continue 
                 # Refine c(p') and n(p')
                 new_pprime = refinePatch(pprime, VpStar, pprime.ref)
+                # new_pprime = pprime
                 # Add visible images (a depth-map test) to V(p')
                 addImages(new_pprime, images, Vp, sigma)
                 # Update V*(p')
@@ -47,7 +49,7 @@ def run(P, images, alpha1, alpha2, gamma, sigma, rho, beta, numPatches, filename
                 # Add p' to P
                 P.append(new_pprime)
                 # Add p' to corresponding Qj(x, y) and Q*j(x, y)
-                registerPatch(new_pprime, VpStar, beta, False)
+                registerPatch(new_pprime, Vp, VpStar, beta)
                 patchGenerated += 1
                 logging.info("STATUS : SUCCESS")
                 logging.info("------------------------------------------------")
@@ -64,19 +66,19 @@ def collectCells(cell, patch, images, rho, alpha) :
     image = utils.getImage(id, images)
     C = []
 
-    c1 = image.cells[x-1][y]
-    c2 = image.cells[x+1][y]
-    c3 = image.cells[x][y-1]
-    c4 = image.cells[x][y+1]
+    c1 = image.cells[y-1][x]
+    c2 = image.cells[y+1][x]
+    c3 = image.cells[y][x-1]
+    c4 = image.cells[y][x+1]
 
-    if utils.identifyCell(c1, image, patch, rho, alpha) : 
-        C .append(c1)
-    if utils.identifyCell(c2, image, patch, rho, alpha) : 
-        C .append(c2)
-    if utils.identifyCell(c3, image, patch, rho, alpha) : 
-        C .append(c3)
-    if utils.identifyCell(c4, image, patch, rho, alpha) : 
-        C .append(c4)
+    if utils.identifyCell(c1, patch, rho) : 
+        C.append(c1)
+    if utils.identifyCell(c2, patch, rho) : 
+        C.append(c2)
+    if utils.identifyCell(c3, patch, rho) : 
+        C.append(c3)
+    if utils.identifyCell(c4, patch, rho) : 
+        C.append(c4)
     
     return C 
 
@@ -99,3 +101,21 @@ def addImages(patch, images, Vp, sigma) :
                 continue 
             else : 
                 Vp.append(image)
+
+def registerPatch(patch, Vp, VpStar, beta) : 
+    for img in Vp : 
+        pmat = img.pmat
+        pt = pmat @ patch.center
+        pt /= pt[2]
+        x = int(pt[0]/beta) 
+        y = int(pt[1]/beta)
+        img.cells[y][x].q.append(patch)
+        isQStar = 0
+        if utils.getImage(img.id, VpStar) :
+            isQStar = 1
+            img.cells[y][x].qStar.append(patch)
+            patch.VpStar.append(img)
+        img.cells[y][x].hasRecon = True
+        cell = np.array([img.id, [x, y], isQStar, 1])
+        patch.cells.append(cell)
+        patch.Vp.append(img)

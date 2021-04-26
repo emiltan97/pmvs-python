@@ -1,0 +1,6 @@
+** config.txt ** 
+<alpha1> <alpha2> <beta> <gamma> <n> <rho> <sigma> <omega> <mu>
+** features.txt ** 
+<dirname><imagename> <number_of_features> <x> <y> <x> <y> ...
+** patches.txt ** 
+<ref.id> <center[0]> <center[1]> <center[2]> <center[3]> <normal[0]> <normal[1]> <normal[2]> <normal[3]> <img.id> <x> <y> <img.id> <x> <y> ...

@@ -15,7 +15,7 @@ def run(images, alpha1, alpha2, omega, sigma, gamma, beta, filename, isDisplay) 
     # P <- empty
     patches = []
     # For each image I with optical center O(I)
-    for I in images : 
+    for I in images :
         # For each feature f detected in I 
         f_num = 1
         for f in I.feats :
@@ -54,7 +54,7 @@ def run(images, alpha1, alpha2, omega, sigma, gamma, beta, filename, isDisplay) 
                 patches.append(new_p)
                 # Add p to the corresponding Qj(x, y) and Qj*(x, y)
                 # Remove features from the cells where p was stored
-                registerPatch(new_p, VpStar, beta, True)
+                registerPatch(new_p, Vp, VpStar, beta, f, fprime, False)
                 logging.info("STATUS : SUCCESS")
                 logging.info("------------------------------------------------")
                 # Exit innermost for loop 
@@ -131,7 +131,7 @@ def computeVpStar(Vp, p, alpha, ref) :
         if ref.id == image.id : 
             continue 
         else :
-            h = 1 - optim.computeDiscrepancy(ref, image, p)
+            h = 1 - optim.computeDiscrepancy(ref, image, p, Vp)
             if h < alpha :
                 VpStar.append(image) 
 
@@ -142,18 +142,29 @@ def refinePatch(patch, VpStar, ref) :
 
     return refinedPatch
 
-def registerPatch(patch, VpStar, beta, isInitial) : 
-    for img in VpStar : 
-        if img.id == patch.ref.id : 
-            continue
-        pmat = img.pmat
+def registerPatch(patch, Vp, VpStar, beta, f, fprime, isDisplay) : 
+    for image in Vp : 
+        pmat = image.pmat
         pt = pmat @ patch.center
         pt /= pt[2]
         x = int(pt[0]/beta) 
         y = int(pt[1]/beta)
-        img.cells[x][y].patches.append(patch)
-        if isInitial: 
-            utils.removeFeatures(img, img.cells[x][y])
-        cell = np.array([img.id, [x, y]])
+        image.cells[y][x].q.append(patch)
+        isQStar = 0
+        if utils.getImage(image.id, VpStar) :
+            isQStar = 1
+            image.cells[y][x].qStar.append(patch)
+            patch.VpStar.append(image)
+        utils.removeFeatures(image, image.cells[y][x])
+        cell = np.array([image.id, [x, y], isQStar, 0])
         patch.cells.append(cell)
-        patch.VpStar = VpStar
+        patch.Vp.append(image)
+        if isDisplay : 
+            ref = cv.imread(patch.ref.name)
+            cv.circle(ref, (int(f.x), int(f.y)), 3, (0, 255, 0), -1)
+            img = image.displayFeatureMap() 
+            cv.circle(img, (int(pt[0]), int(pt[1])), 3, (0, 255, 0), -1)
+            cv.imshow(f'Ref : {patch.ref.id}', ref)
+            cv.imshow(f'Img : {image.id}', img)
+            cv.waitKey(0)
+            cv.destroyAllWindows()

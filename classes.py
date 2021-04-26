@@ -1,7 +1,8 @@
+from numpy import dot
 import numpy as np
 import cv2 as cv
 from numpy.core.numeric import cross
-from numpy.linalg.linalg import norm
+from numpy.linalg.linalg import norm, pinv
 
 class Image : 
     def __init__(self, name, ins, ex, id) : 
@@ -38,12 +39,17 @@ class Patch :
         self.ref = ref 
         self.px, self.py = self.getPatchAxes()
         self.cells = []
-        self.VpStar = None
+        self.VpStar = []
+        self.Vp = []
 
     def getPatchAxes(self) : 
         pmat= self.ref.pmat
         xaxis = self.ref.xaxis
         yaxis = self.ref.yaxis
+        normal3 = np.array([self.normal[0], self.normal[1], self.normal[2]])
+        yaxis3 = cross(normal3, xaxis)
+        yaxis3 /= norm(yaxis3)
+        xaxis3 = cross(yaxis3, normal3)
         xaxe = np.array([xaxis[0], xaxis[1], xaxis[2], 0])
         yaxe = np.array([yaxis[0], yaxis[1], yaxis[2], 0])
         fx = xaxe @ pmat[0]
@@ -51,17 +57,12 @@ class Patch :
         fz = norm(self.center - self.ref.center)
         ftmp = fx + fy
         pscale = fz / ftmp
-        # pscale = 2 * 2 * fz / ftmp
-        normal3 = np.array([self.normal[0], self.normal[1], self.normal[2]])
-        yaxis3 = cross(normal3, xaxis)
-        yaxis3 /= norm(yaxis3)
-        xaxis3 = cross(yaxis3, normal3)
-        
+        pscale = 2 * fz / ftmp
         pxaxis = np.array([xaxis3[0], xaxis3[1], xaxis3[2], 0])
         pyaxis = np.array([yaxis3[0], yaxis3[1], yaxis3[2], 0])
 
         pxaxis *= pscale
-        pyaxis *= pscale 
+        pyaxis *= pscale
 
         a = pmat @ (self.center + pxaxis)
         b = pmat @ (self.center + pyaxis)
@@ -81,7 +82,10 @@ class Patch :
         return pxaxis, pyaxis
 
 class Cell : 
-    def __init__(self, center) :
-        self.patches = []
+    def __init__(self, center, image) :
+        self.q = []
+        self.qStar = []
         self.center = center
         self.feats = []
+        self.hasRecon = False
+        self.image = image

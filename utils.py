@@ -3,10 +3,8 @@ from classes import Patch
 from math import sqrt
 import numpy as np
 from numpy.linalg import pinv
-from numpy.linalg.linalg import inv, norm, svd
+from numpy.linalg.linalg import inv, svd
 from numpy import dot
-import optim
-import os
 
 def fundamentalMatrix(ref, img) : 
     center1 = ref.center 
@@ -52,7 +50,7 @@ def triangulate(f1, f2, m1, m2) :
 
     return V[3, :]
 
-def insertionSort(A) : 
+def insertionSort(A) :
     i = 1 
     while i < len(A) : 
         j = i 
@@ -74,11 +72,13 @@ def getImage(id, images) :
         if id == image.id :
             return image
 
-def identifyCell(cell, image, p, rho, alpha) :
-    for pprime in cell.patches :
+def identifyCell(cell, p, rho) :
+    for pprime in cell.q :
+        if cell.hasRecon :
+            return False
         if isNeighbour(p, pprime, rho) :
             return False
-        if isDiscontinue(pprime, image, alpha) : 
+        if isDiscontinue(cell) : 
             return False
 
     return True
@@ -96,27 +96,27 @@ def isNeighbour(p1, p2, rho) :
     
     return False
 
-def isDiscontinue(patch, image, alpha) :
-    if 1 - optim.computeDiscrepancy(patch.ref, image, patch, miu) < alpha : 
+def isDiscontinue(cell) :
+    if cell.qStar :
         return True
     return False
 
 def computeCenter(patch, cell) :
+    image = cell.image
     x = np.array([cell.center[0], cell.center[1], 1])
     R = np.array([
-        [patch.ref.pmat[0][0], patch.ref.pmat[0][1], patch.ref.pmat[0][2]],
-        [patch.ref.pmat[1][0], patch.ref.pmat[1][1], patch.ref.pmat[1][2]],
-        [patch.ref.pmat[2][0], patch.ref.pmat[2][1], patch.ref.pmat[2][2]]
+        [ image.pmat[0][0],  image.pmat[0][1],  image.pmat[0][2]],
+        [ image.pmat[1][0],  image.pmat[1][1],  image.pmat[1][2]],
+        [ image.pmat[2][0],  image.pmat[2][1],  image.pmat[2][2]]
     ])
     t = np.array([
-        patch.ref.pmat[0][3],
-        patch.ref.pmat[1][3],
-        patch.ref.pmat[2][3]
+         image.pmat[0][3],
+         image.pmat[1][3],
+         image.pmat[2][3]
     ])
     X = inv(R) @ (x - t)
     X = np.array([X[0], X[1], X[2], 1])
-    vect = X - patch.ref.center
-
+    vect = X - image.center
     t = -(patch.normal @ X - patch.normal @ patch.center) / (patch.normal @ vect)
 
     return X + t*vect
@@ -142,6 +142,8 @@ def savePatch(patch, filename) :
         file.write(str(cell[0])); file.write(" ")
         file.write(str(cell[1][0])); file.write(" ")
         file.write(str(cell[1][1])); file.write(" ")
+        file.write(str(cell[2])); file.write(" ")
+        file.write(str(cell[3])); file.write(" ")
     file.write("\n")    
     file.close()
 
@@ -161,6 +163,8 @@ def savePatches(patches, filename) :
             file.write(str(cell[0])); file.write(" ")
             file.write(str(cell[1][0])); file.write(" ")
             file.write(str(cell[1][1])); file.write(" ")
+            file.write(str(cell[2])); file.write(" ")
+            file.write(str(cell[3])); file.write(" ")
         file.write("\n")    
     file.close()
 
@@ -184,8 +188,15 @@ def loadPatches(images, filename) :
             ids.append(id)
             x = int(words.pop(0))
             y = int(words.pop(0))
-            getImage(id, images).cells[x][y].patches.append(patch)
-            cell = np.array([id, [x, y]])
+            isQStar = int(words.pop(0))
+            hasRecon = int(words.pop(0))
+            img = getImage(id, images)
+            if isQStar == 1: 
+                img.cells[y][x].qStar.append(patch)
+            img.cells[y][x].q.append(patch)
+            if hasRecon == 1: 
+                img.cells[y][x].hasRecon = True
+            cell = np.array([id, [x, y], isQStar, hasRecon])
             patch.cells.append(cell)
         VpStar = []
         while ids : 

@@ -21,7 +21,6 @@ def estimateProjectionMatrix(x, y, P) :
             Q = np.vstack((Q, Qk))
 
     U, E, V = np.linalg.svd(Q)
-
     res = np.array([
         [V[11, 0], V[11, 1], V[11, 2],  V[11, 3]],
         [V[11, 4], V[11, 5], V[11, 6],  V[11, 7]],
@@ -84,8 +83,6 @@ def estimateTriangulatedPoints(xl, yl, xr, yr, ml, mr, n) :
     return res
 
 if __name__ == "__main__" : 
-    left  = cv.imread("data/l3.png")
-    right = cv.imread("data/r3.png")
 
     xl = np.array([
         [213],
@@ -146,10 +143,13 @@ if __name__ == "__main__" :
     ml = estimateProjectionMatrix(xl, yl, P) 
     mr = estimateProjectionMatrix(xr, yr, P) 
 
+    pt = ml @ np.array([0.021, -0.021, 0, 1])
+    pt /= pt[2]
+    print(pt)
+    exit()
+
     kl, rl, tl = estimateInsExParams(ml)
     kr, rr, tr = estimateInsExParams(mr)
 
-    print(rl)
-    print(tl)
-
-    triangulatedPoints = estimateTriangulatedPoints(xl, yl, xr, yr, ml, mr, 10)
+    print(ml)
+    print(mr)

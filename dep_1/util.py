@@ -96,6 +96,17 @@ def applyGrid(images, gridSize, isDisplay) :
             cv.waitKey(0)
             cv.destroyAllWindows()
 
+
+def drawGrid(img, gridSize) : 
+    x = gridSize
+    y = gridSize
+    while x < img.shape[1] : 
+        cv.line(img, (x, 0), (x, img.shape[0]), (0, 255, 0), 1)
+        x += gridSize
+    while y < img.shape[0] : 
+        cv.line(img, (0, y), (img.shape[1], y), (0, 255, 0), 1)
+        y += gridSize
+
 def HarrisCorner(images, isDisplay) : 
     for image in images : 
         features = []
@@ -440,13 +451,3 @@ def computeBilinearInterpolation(x, y, x1, x2, y1, y2, q11, q12, q21, q22) :
     f = a * b @ c @ d
 
     return f 
-
-def drawGrid(img, gridSize) : 
-    x = gridSize
-    y = gridSize
-    while x < img.shape[1] : 
-        cv.line(img, (x, 0), (x, img.shape[0]), (0, 255, 0), 1)
-        x += gridSize
-    while y < img.shape[0] : 
-        cv.line(img, (0, y), (img.shape[1], y), (0, 255, 0), 1)
-        y += gridSize

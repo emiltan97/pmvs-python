@@ -1,2 +1,2 @@
- 0.6       0.3     2      4       100   2     60      5       5
+ 0.6       0.3     2      4       1000  2     60      5       5
 <alpha1> <alpha2> <beta> <gamma> <n> <rho> <sigma> <omega> <mu>

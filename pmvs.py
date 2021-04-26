@@ -16,7 +16,7 @@ if __name__ == "__main__" :
     parser.add_argument('--config', type=str, default="txt/config.txt")
     parser.add_argument('--dirname', type=str, default="data/dinoSR/")
     parser.add_argument('--outname', type=str, default="out.ply")
-    parser.add_argument('--numpatch', type=int, default="9999")
+    parser.add_argument('-n', '--numpatch', type=int, default="9999")
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-l', '--load', action='store_true')
     parser.add_argument('-d', '--display', action='store_true')
@@ -49,6 +49,9 @@ if __name__ == "__main__" :
         patches = initialmatch.run(images, alpha1, alpha2, omega, sigma, gamma, beta, args.filename3, args.display)
     else :
         patches = utils.loadPatches(images, args.filename3)
+    logging.info("------------------------------------------------")
+    logging.info("Writing PLY...")
+    utils.writePly(patches, args.outname)
     # Iteration n=3 of expansion and filtering
     iter = 1 
     for i in range(n) : 

@@ -3,16 +3,16 @@ from classes import Image, Feature, Cell
 import logging
 import numpy as np
 from numpy.linalg.linalg import inv, norm
-import os
 import cv2 as cv
 
 def run(imageFile, featureFile, beta, isDisplay) : 
     print("==========================================================", flush=True)
     print("                       PREPROCESSING                      ", flush=True)
     print("==========================================================", flush=True)
+
     images = loadImages(imageFile)
     calibrateImages(images)
-    setCell(images, beta)
+    setCell(images, beta, isDisplay)
     featureDetection(images, featureFile, beta, isDisplay)
 
     return images
@@ -66,7 +66,11 @@ def calibrateImages(images) :
             center[2],
             1
         ])
-        zaxis = np.array([pmat[2][0], pmat[2][1], pmat[2][2]])
+        zaxis = np.array(pmat[2])
+        zaxis[3] = 0 
+        ftmp = norm(zaxis)
+        zaxis /= ftmp
+        zaxis = np.array([zaxis[0], zaxis[1], zaxis[2]])
         xaxis = np.array([pmat[0][0], pmat[0][1], pmat[0][2]])
         yaxis = cross(zaxis, xaxis)
         yaxis /= norm(yaxis)
@@ -85,6 +89,17 @@ def featureDetection(images, filename, beta, isDisplay) :
     for image in images : 
         logging.info(f'IMAGE {image.id:02d}:Detecting features...')
         img = cv.imread(image.name)
+        if isDisplay : 
+            x = beta 
+            y = beta
+            width = img.shape[1]
+            height = img.shape[0]
+            while x < width : 
+                cv.line(img, (x, 0), (x, height), (0, 255, 0), 1)
+                x += beta
+            while y < height : 
+                cv.line(img, (0, y), (width, y), (0, 255, 0), 1)
+                y += beta
         for line in lines : 
             words = line.split()
             if image.name == words[0] : 
@@ -99,24 +114,26 @@ def featureDetection(images, filename, beta, isDisplay) :
                     while a < 3 : 
                         b = -2 
                         while b < 3 : 
-                            image.cells[int(feat.x/beta+b)][int(feat.y/beta+a)].feats.append(feat)
+                            image.cells[int(feat.y/beta+b)][int(feat.x/beta+a)].feats.append(feat)
+                            if isDisplay : 
+                                coord = image.cells[int(feat.y/beta+b)][int(feat.x/beta+a)].center
+                                cv.circle(img, (int(coord[0]), int(coord[1])), 2, (255, 0, 0), -1)
                             b += 1
                         a += 1
                     i += 2 
         image.feats = feats
         if isDisplay : 
-            # img = cv.rotate(img, cv.ROTATE_90_COUNTERCLOCKWISE)
-            cv.imshow("test", img)
+            cv.imshow(f'Image {image.id:02d}', img)
             cv.waitKey(0)
             cv.destroyAllWindows()
 
-def setCell(images, beta) : 
+def setCell(images, beta, isDisplay) : 
     for image in images : 
-        logging.info(f'IMAGE {image.id:02d}:Applying Cells')
+        logging.info(f'IMAGE {image.id:02d}:Applying cells')
         img = cv.imread(image.name)
         width = img.shape[1]
         height = img.shape[0]
-        cells = np.empty((int(width/beta), int(height/beta)), dtype=Cell)
+        cells = np.empty((int(height/beta), int(width/beta)), dtype=Cell)
         y = 0 
         i = 0
         while y < height : 
@@ -124,10 +141,24 @@ def setCell(images, beta) :
             j = 0
             while x < width : 
                 center = np.array([x+beta/2, y+beta/2])
-                cell = Cell(center) 
-                cells[j][i] = cell
+                cell = Cell(center, image) 
+                if isDisplay : 
+                    cv.circle(img, (int(center[0]), int(center[1])), 2, (0, 0, 255), -1)
+                cells[i][j] = cell
                 j += 1
                 x += beta
             i += 1
             y += beta
         image.cells = cells
+        if isDisplay : 
+            x = beta 
+            y = beta
+            while x < width : 
+                cv.line(img, (x, 0), (x, height), (0, 255, 0), 1)
+                x += beta
+            while y < height : 
+                cv.line(img, (0, y), (width, y), (0, 255, 0), 1)
+                y += beta
+            cv.imshow(f'Image {image.id:02d}', img)
+            cv.waitKey(0)
+            cv.destroyAllWindows()
