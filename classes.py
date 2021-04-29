@@ -25,6 +25,15 @@ class Image :
 
         return img
 
+    def allPatches(self) : 
+        patches = []
+        for celli in self.cells : 
+            for cell in celli :
+                for patch in cell.q : 
+                    patches.append(patch)
+        
+        return patches
+
 class Feature : 
     def __init__(self, x, y, image) :
         self.x = x 

@@ -6,6 +6,7 @@ import initialmatch
 from datetime import datetime
 import expansion
 import os
+import filter
 
 if __name__ == "__main__" :
     # Initializing parser 
@@ -16,7 +17,7 @@ if __name__ == "__main__" :
     parser.add_argument('--config', type=str, default="txt/config.txt")
     parser.add_argument('--dirname', type=str, default="data/dinoSR/")
     parser.add_argument('--outname', type=str, default="out.ply")
-    parser.add_argument('-n', '--numpatch', type=int, default="9999")
+    parser.add_argument('-n', '--numpatch', type=int, default="-1")
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-l', '--load', action='store_true')
     parser.add_argument('-d', '--display', action='store_true')
@@ -59,6 +60,7 @@ if __name__ == "__main__" :
         print(f"                        EXPANSION {iter}                        ")
         print( "==========================================================")
         expansion.run(patches, images, alpha1, alpha2, gamma, sigma, rho, beta, args.numpatch, args.filename3)
+        filter.run(patches, images, sigma, gamma)
         iter += 1
         if not args.auto : 
             str = input("\nContinue? [y/n]\n")

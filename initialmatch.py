@@ -96,6 +96,7 @@ def computeF(I, images, f, omega, isDisplay) :
 def sortF(F, f) : 
     for feat in F : 
         pt = utils.triangulate(f, feat, f.image.pmat, feat.image.pmat)
+        res = f.image.pmat @ pt
         vec = pt - f.image.center
         depth = norm(vec)
         feat.depth = depth
@@ -131,7 +132,7 @@ def computeVpStar(Vp, p, alpha, ref) :
         if ref.id == image.id : 
             continue 
         else :
-            h = 1 - optim.computeDiscrepancy(ref, image, p, Vp)
+            h = 1 - optim.computeDiscrepancy(ref, image, p)
             if h < alpha :
                 VpStar.append(image) 
 

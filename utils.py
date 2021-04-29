@@ -5,6 +5,7 @@ import numpy as np
 from numpy.linalg import pinv
 from numpy.linalg.linalg import inv, svd
 from numpy import dot
+from optim import computeDiscrepancy
 
 def fundamentalMatrix(ref, img) : 
     center1 = ref.center 
@@ -244,3 +245,15 @@ def writePly(patches, filename) :
         file.write(str(color[1])); file.write(" ")
         file.write(str(color[2])); file.write(" ")
         file.write("\n")
+
+def computeGStar(patch) : 
+    gStar = 0 
+    for image in patch.VpStar : 
+        if image.id == patch.ref.id : 
+            continue 
+        else : 
+            ncc = 1 - computeDiscrepancy(patch.ref, image, patch) 
+            gStar += ncc
+    gStar /= len(patch.VpStar) - 1 
+
+    return gStar

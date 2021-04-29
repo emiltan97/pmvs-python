@@ -35,7 +35,6 @@ def run(P, images, alpha1, alpha2, gamma, sigma, rho, beta, numPatches, filename
                     continue 
                 # Refine c(p') and n(p')
                 new_pprime = refinePatch(pprime, VpStar, pprime.ref)
-                # new_pprime = pprime
                 # Add visible images (a depth-map test) to V(p')
                 addImages(new_pprime, images, Vp, sigma)
                 # Update V*(p')
@@ -54,10 +53,14 @@ def run(P, images, alpha1, alpha2, gamma, sigma, rho, beta, numPatches, filename
                 logging.info("STATUS : SUCCESS")
                 logging.info("------------------------------------------------")
                 utils.savePatch(new_pprime, filename)
-                if patchGenerated >= numPatches : 
+                if patchGenerated >= numPatches and numPatches != -1: 
                     return
             c_num += 1
         p_num += 1
+
+    for image in images : 
+        for patch in image.allPatches() :
+            P.append(patch)
 
 def collectCells(cell, patch, images, rho, alpha) :
     id = cell[0]
